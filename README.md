@@ -4,7 +4,7 @@
 
 **Proof of Integrity for Bioinformatic RNASeq Pipeline**
 
-OmicChain is a revolutionary software that bridges bioinformatics and blockchain technology, providing immutable proof of integrity for RNASeq analysis pipelines. By combining automated workflow execution with blockchain certification and NFT minting, OmicChain ensures complete traceability and verifiability of scientific results.
+OmicChain is a software that bridges bioinformatics and blockchain technology, providing immutable proof of integrity for RNASeq analysis pipelines. By combining automated workflow execution with blockchain certification and NFT minting, OmicChain ensures complete traceability and verifiability of scientific results.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
@@ -67,7 +67,11 @@ Ensure these files are in your project directory:
 - **Mainnet**: Real ETH on Base network for gas fees
 - **Testnet**: Free testnet ETH from [Alchemy Base Sepolia Faucet](https://www.alchemy.com/faucets/base-sepolia)
 
+
 ## ⚙️ Configuration
+
+**Infura and Pinata keys:**
+Create accounts and get your keys to complete your .env file
 
 Create a `.env` file in your project directory:
 
@@ -119,7 +123,7 @@ streamlit run OmicChain.py
 
 ### 1. Execute Pipeline
 - Upload your Snakefile and R script
-- Provide expression table (TSV format)
+- Provide expression table (TSV format supplied in the repository as example but you can generate a new one with count_matrix_generator.py and adjust settings)
 - Select control and treatment samples
 - Execute the automated pipeline
 
@@ -215,7 +219,7 @@ If you use OmicChain in your research, please cite:
   author = {Guichet, Pierre-Olivier},
   title = {OmicChain: Proof of Integrity for Bioinformatic RNASeq Pipeline},
   year = {2026},
-  url = {https://github.com/ProDiCeT/OmicChain},
+  url = {https://github.com/UR24144-ProDiCeT/OmicChain},
   version = {1.0}
 }
 ```
@@ -225,10 +229,9 @@ If you use OmicChain in your research, please cite:
 - [ ] Support for additional blockchain networks
 - [ ] Integration with more bioinformatic pipelines
 - [ ] Enhanced NFT metadata standards
-- [ ] Multi-omics support (proteomics, metabolomics)
+- [ ] Multi-omics support (Genomic, proteomic, metabolomic)
 - [ ] Decentralized storage options
-- [ ] API for programmatic access
 
 ---
 
-**Made with 🧬 for reproducible science**
+**Made with love for open and reproducible science**
