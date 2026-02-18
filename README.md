@@ -46,6 +46,7 @@ mamba install -c bioconda snakemake
 install.packages(c("pheatmap", "RColorBrewer", "tibble", "dplyr", "ggplot2"))
 BiocManager::install(c("DESeq2", "clusterProfiler", "org.Hs.eg.db", "tiff"))
 ```
+```Do not forget to add Rscipt to the path to avoid error messages```
 
 ### Required Project Files
 
