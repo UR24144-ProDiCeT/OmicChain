@@ -1,0 +1,31 @@
+{
+  "schema": "omicchain.manifest/1",
+  "components": [
+    {"id": "snakefile",  "label": "Snakefile",                          "path": "Snakefile",                                 "role": "workflow",        "language": "snakemake"},
+    {"id": "rscript",    "label": "R analysis script",                  "path": "run_deseq2.R",                              "role": "code",            "language": "r"},
+    {"id": "de_core",    "label": "R analysis core (DESeq2 fit)",       "path": "de_core.R",                                 "role": "code",            "language": "r"},
+    {"id": "parameters", "label": "Analysis parameters",                "path": "{results_dir}/analysis_parameters.txt",     "role": "parameters"},
+    {"id": "data",       "label": "Input data (expression + metadata)", "path": "{results_dir}/data_provenance.txt",         "role": "data-provenance"},
+    {"id": "data_origin", "label": "Data origin (public study, FASTQ files or count matrix)", "path": "{results_dir}/data_origin.json", "role": "data-origin", "optional": true},
+    {"id": "renv_lock",  "label": "R environment (renv.lock)",          "path": "{results_dir}/renv.lock",                   "role": "environment"},
+    {"id": "top_genes",  "label": "Top DE genes table",                 "path": "{results_dir}/top_genes.tsv",               "role": "output"}
+  ],
+  "extra_files": [
+    {"label": "Heatmap",          "path": "{results_dir}/heatmap.tiff",         "role": "figure"},
+    {"label": "Volcano plot",     "path": "{results_dir}/volcano.tiff",         "role": "figure"},
+    {"label": "GO dotplot",       "path": "{results_dir}/dotplot_go.tiff",      "role": "figure"},
+    {"label": "Combined figures", "path": "{results_dir}/combined_figures.png", "role": "figure"},
+    {"label": "PDF report",       "path": "{results_dir}/report.pdf",           "role": "report"}
+  ],
+  "inputs": [
+    {"label": "Expression matrix (input)", "path": "expression_input.tsv", "role": "input"},
+    {"label": "Sample metadata (input)",   "path": "metadata.tsv",         "role": "input"}
+  ],
+  "crate": {
+    "name": "OmicChain certified analysis (padj < {padj_threshold}, |log2FC| >= {lfc_threshold})",
+    "description": "Differential expression analysis (DESeq2) certified with OmicChain.",
+    "parameters_file": "{results_dir}/analysis_parameters.txt",
+    "include_inputs": true,
+    "license": null
+  }
+}

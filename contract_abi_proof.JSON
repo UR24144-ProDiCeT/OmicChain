@@ -9,10 +9,16 @@
 				"type": "address"
 			},
 			{
-				"indexed": false,
-				"internalType": "string",
+				"indexed": true,
+				"internalType": "bytes32",
 				"name": "hash",
-				"type": "string"
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
 			}
 		],
 		"name": "HashPublished",
@@ -21,9 +27,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
+				"internalType": "bytes32",
 				"name": "hash",
-				"type": "string"
+				"type": "bytes32"
 			}
 		],
 		"name": "publishHash",

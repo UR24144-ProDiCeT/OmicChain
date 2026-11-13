@@ -1,0 +1,7 @@
+# Same bytes on every platform: the certified code is hashed as stored.
+* text=auto eol=lf
+*.png binary
+*.tiff binary
+*.pdf binary
+*.zip binary
+*.gz binary

@@ -1,31 +1,30 @@
-#!/usr/bin/env Rscript
-#
-# run_deseq2.R — Robust DESeq2 pipeline for OmicChain
-#
-# Usage:
-#   Rscript run_deseq2.R expression_input.tsv metadata.tsv
-#
-# Produces:
-#   results/heatmap.tiff
-#   results/volcano.tiff
-#   results/dotplot_go.tiff
-#   results/dotplot_kegg.tiff
-#   results/top_genes.tsv
-#   results/report.pdf
-#
-
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) {
-  stop("Usage: run_deseq2.R <expression_tsv> <metadata_tsv>")
+  stop("Usage: run_deseq2.R <expression_tsv> <metadata_tsv> [padj_threshold] [lfc_threshold]")
 }
 expression_file <- args[1]
 metadata_file <- args[2]
 
+padj_threshold <- if (length(args) >= 3) as.numeric(args[3]) else 0.05
+lfc_threshold  <- if (length(args) >= 4) as.numeric(args[4]) else 1.0
+
+outdir <- if (length(args) >= 5) args[5] else "results"
+
+covariate <- if (length(args) >= 6 && nzchar(args[6])) args[6] else NULL
+
+if (is.na(padj_threshold) || padj_threshold <= 0 || padj_threshold > 1) {
+  stop("Invalid padj_threshold: must be a number in (0, 1].")
+}
+if (is.na(lfc_threshold) || lfc_threshold < 0) {
+  stop("Invalid lfc_threshold: must be a non-negative number.")
+}
+
+cat(sprintf("Analysis parameters: padj_threshold=%s, lfc_threshold=%s, covariate=%s\n",
+            padj_threshold, lfc_threshold, if (is.null(covariate)) "none" else covariate))
+
 suppressMessages({
-  # Load libraries but don't crash hard if one is missing — give informative errors
-  required <- c("DESeq2", "tibble", "dplyr", "ggplot2", "pheatmap",
-                "RColorBrewer", "clusterProfiler", "org.Hs.eg.db",
-                "AnnotationDbi", "gridExtra", "grid", "tiff", "BiocManager", "Biobase")
+  required <- c("ggplot2", "pheatmap", "RColorBrewer", "clusterProfiler",
+                "org.Hs.eg.db", "AnnotationDbi", "gridExtra", "grid", "tiff", "Biobase")
   for (pkg in required) {
     if (!suppressWarnings(require(pkg, character.only = TRUE))) {
       stop(paste0("Package required but not available: ", pkg, ". Install with BiocManager::install('", pkg, "') or install.packages."))
@@ -33,106 +32,29 @@ suppressMessages({
   }
 })
 
-# Create results dir
-if (!dir.exists("results")) dir.create("results", recursive = TRUE)
+if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE)
 
-# Safe read
-expr <- tryCatch({
-  read.table(expression_file, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE, stringsAsFactors = FALSE)
-}, error = function(e) stop("Failed to read expression file: ", e$message))
+source("de_core.R")
+core <- run_de_core(expression_file, metadata_file, covariate = covariate)
+res_df <- core$res_df
+dds <- core$dds
 
-meta <- tryCatch({
-  read.table(metadata_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-}, error = function(e) stop("Failed to read metadata file: ", e$message))
+top <- res_df %>%
+  dplyr::filter(!is.na(padj),
+                padj < padj_threshold,
+                abs(log2FoldChange) >= lfc_threshold) %>%
+  dplyr::arrange(padj)
+cat(sprintf("Significant genes (padj < %s, |log2FC| >= %s): %d\n", padj_threshold, lfc_threshold, nrow(top)))
 
-# Validate metadata
-if (!("sample" %in% colnames(meta)) || !("group" %in% colnames(meta))) {
-  stop("Metadata must contain columns 'sample' and 'group'")
-}
+top <- top %>%
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ signif(.x, 6)))
 
-if (!all(meta$sample %in% colnames(expr))) {
-  stop("Error: Sample names mismatch between metadata and expression file. Check metadata$sample and expression column names.")
-}
-
-# Subset and factorize
-expr <- expr[, meta$sample, drop = FALSE]
-meta$group <- factor(meta$group)
-
-# Convert to integers for counts (rounding)
-countdata <- round(as.matrix(expr))
-
-# Create DESeq2 dataset
-dds <- tryCatch({
-  DESeqDataSetFromMatrix(countData = countdata, colData = meta, design = ~ group)
-}, error = function(e) stop("DESeq2 dataset creation failed: ", e$message))
-
-# Pre-filter rows with all zeros (optional but helpful)
-keep <- rowSums(counts(dds)) > 1
-dds <- dds[keep, ]
-
-# Run DESeq
-dds <- tryCatch({
-  DESeq(dds)
-}, error = function(e) stop("DESeq() failed: ", e$message))
-
-# results()
-# Try to get coef name robustly: look for something like "group_treatment_vs_control" or the second level
-res <- tryCatch({
-  res_all <- results(dds)
-  # Attempt shrinkage with available methods (apeglm or as fallback)
-  coef_name <- NULL
-  # Try to infer coefficient: if resultsNames contains "group_" pattern, pick a contrast
-  rn <- resultsNames(dds)
-  # prefer names containing "group" and "vs"
-  sel <- rn[grepl("^group", rn) | grepl("group_", rn)]
-  if (length(sel) >= 1) coef_name <- sel[1] else if (length(rn) >= 2) coef_name <- rn[2]
-  # Try shrink if possible
-  res_shr <- tryCatch({
-    # prefer apeglm if available
-    if ("apeglm" %in% installed.packages()[,1]) {
-      lfcShrink(dds, coef = coef_name, type = "apeglm")
-    } else if ("ashr" %in% installed.packages()[,1]) {
-      lfcShrink(dds, coef = coef_name, type = "ashr")
-    } else {
-      # fallback to normal results (no shrink)
-      results(dds)
-    }
-  }, error = function(e) {
-    # fallback
-    results(dds)
-  })
-  res_shr
-}, error = function(e) stop("Failed to obtain results: ", e$message))
-
-# Convert to data frame and tidy
-res_df <- as.data.frame(res)
-res_df <- tibble::rownames_to_column(res_df, "Gene")
-
-# Ensure padj exists; if NA, keep NA
-# Order by padj (NAs go to the end)
-res_df <- res_df[order(res_df$padj, na.last = TRUE), ]
-
-# Create 'top' table with filters; be permissive if thresholds produce zero rows
-top <- tryCatch({
-  res_df %>%
-    dplyr::filter(!is.na(padj),
-                  padj < 0.05,
-                  abs(log2FoldChange) > 0) %>%
-    dplyr::arrange(padj)
-}, error = function(e) {
-  # fallback to empty tibble with columns
-  res_df[0, , drop = FALSE]
-})
-
-# Write top_genes.tsv even if empty
 tryCatch({
-  write.table(top, file = "results/top_genes.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(top, file = file.path(outdir, "top_genes.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 }, error = function(e) {
-  warning("Failed to write results/top_genes.tsv: ", e$message)
+  warning("Failed to write top_genes.tsv: ", e$message)
 })
 
-# ---------- Heatmap ----------
-# Use rlog or vst depending on size
 rlog_mat <- tryCatch({
   if (ncol(dds) > 30) {
     vst(dds, blind = TRUE)
@@ -140,21 +62,22 @@ rlog_mat <- tryCatch({
     rlog(dds, blind = TRUE)
   }
 }, error = function(e) {
-  # fallback to log transform
   tryCatch({
     assay(dds) <- log2(assay(dds) + 1)
     dds
   }, error = function(e2) NULL)
 })
 
-sig_genes <- res_df %>% dplyr::filter(!is.na(padj) & padj < 0.05) %>% dplyr::pull(Gene)
-heatmap_path <- "results/heatmap.tiff"
+sig_genes <- res_df %>%
+  dplyr::filter(!is.na(padj) & padj < padj_threshold & abs(log2FoldChange) >= lfc_threshold) %>%
+  dplyr::pull(Gene)
+heatmap_path <- file.path(outdir, "heatmap.tiff")
 
 if (length(sig_genes) == 0) {
-  # create placeholder image
   tiff(heatmap_path, width = 1800, height = 1800, res = 300)
   plot.new()
-  text(0.5, 0.5, "No significant genes (padj < 0.05)", cex = 2)
+  text(0.5, 0.5, sprintf("No significant genes (padj < %s, |LFC| >= %s)",
+                          padj_threshold, lfc_threshold), cex = 1.6)
   dev.off()
 } else {
   mat <- tryCatch({
@@ -179,39 +102,71 @@ if (length(sig_genes) == 0) {
   }
 }
 
-# ---------- Volcano ----------
-volcano_path <- "results/volcano.tiff"
-# Prepare plotting table: avoid -log10(0) or -Inf
+volcano_path <- file.path(outdir, "volcano.tiff")
 plot_df <- res_df
-# Use padj when available; otherwise use pvalue; if both NA, set to 1
 plot_df$padj_plot <- ifelse(is.na(plot_df$padj),
                             ifelse(!is.na(plot_df$pvalue), plot_df$pvalue, 1),
                             plot_df$padj)
-plot_df$neglog10padj <- -log10(pmax(plot_df$padj_plot, 1e-300))  # avoid Inf
-plot_df$Significance <- ifelse(!is.na(plot_df$padj) & plot_df$padj < 0.05 & abs(plot_df$log2FoldChange) > 1, "Significant", "NS")
+plot_df$neglog10padj <- -log10(pmax(plot_df$padj_plot, 1e-300))
+
+plot_df$Regulation <- "NS"
+plot_df$Regulation[!is.na(plot_df$padj) & plot_df$padj < padj_threshold &
+                      plot_df$log2FoldChange >= lfc_threshold] <- "Upregulated"
+plot_df$Regulation[!is.na(plot_df$padj) & plot_df$padj < padj_threshold &
+                      plot_df$log2FoldChange <= -lfc_threshold] <- "Downregulated"
+plot_df$Regulation <- factor(plot_df$Regulation,
+                              levels = c("Downregulated", "NS", "Upregulated"))
+
+top50_labels <- plot_df[!is.na(plot_df$padj), ]
+top50_labels <- top50_labels[order(top50_labels$padj), ]
+top50_labels <- utils::head(top50_labels, 50)
+
+has_ggrepel <- suppressWarnings(suppressMessages(
+  requireNamespace("ggrepel", quietly = TRUE)
+))
 
 tiff(volcano_path, width = 1800, height = 1800, res = 300)
 tryCatch({
-  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = log2FoldChange, y = neglog10padj, color = Significance)) +
+  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = log2FoldChange, y = neglog10padj, color = Regulation)) +
     ggplot2::geom_point(alpha = 0.6) +
-    ggplot2::scale_color_manual(values = c("NS" = "grey", "Significant" = "red")) +
+    ggplot2::scale_color_manual(values = c("Downregulated" = "#2166AC",
+                                            "NS" = "grey70",
+                                            "Upregulated" = "#B2182B")) +
     ggplot2::theme_minimal() +
-    ggplot2::labs(title = "Volcano Plot", x = "Log2 Fold Change", y = "-log10(p-adj)") +
-    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+    ggplot2::labs(x = "Log2 Fold Change", y = "-log10(p-adj)") +
+    ggplot2::theme(legend.position = "bottom", legend.title = ggplot2::element_blank())
+
+  if (has_ggrepel) {
+    p <- p + ggrepel::geom_text_repel(
+      data = top50_labels,
+      ggplot2::aes(label = Gene),
+      size = 2.5,
+      max.overlaps = 100,
+      color = "black",
+      show.legend = FALSE
+    )
+  } else {
+    p <- p + ggplot2::geom_text(
+      data = top50_labels,
+      ggplot2::aes(label = Gene),
+      size = 2.5,
+      vjust = -0.6,
+      color = "black",
+      show.legend = FALSE
+    )
+  }
+
   print(p)
 }, error = function(e) {
   plot.new(); text(0.5, 0.5, paste("Volcano error:", e$message), cex = 1.2)
 })
 dev.off()
 
-# ---------- GO & KEGG enrichment ----------
-go_path <- "results/dotplot_go.tiff"
-kegg_path <- "results/dotplot_kegg.tiff"
+go_path <- file.path(outdir, "dotplot_go.tiff")
 
-sig_for_enrich <- res_df %>% dplyr::filter(!is.na(padj) & padj < 0.05 & abs(log2FoldChange) > 1)
+sig_for_enrich <- res_df %>% dplyr::filter(!is.na(padj) & padj < padj_threshold & abs(log2FoldChange) >= lfc_threshold)
 entrez_ids <- character(0)
 if (nrow(sig_for_enrich) > 0) {
-  # Map SYMBOL -> ENTREZID
   entrez_map <- tryCatch({
     AnnotationDbi::mapIds(org.Hs.eg.db, keys = sig_for_enrich$Gene, column = "ENTREZID", keytype = "SYMBOL", multiVals = "first")
   }, error = function(e) {
@@ -224,16 +179,10 @@ if (nrow(sig_for_enrich) > 0) {
 }
 
 if (length(entrez_ids) == 0) {
-  # placeholders
   tiff(go_path, width = 1800, height = 1800, res = 300)
   plot.new(); text(0.5, 0.5, "No genes for GO enrichment", cex = 2)
   dev.off()
-
-  tiff(kegg_path, width = 1800, height = 1800, res = 300)
-  plot.new(); text(0.5, 0.5, "No genes for KEGG enrichment", cex = 2)
-  dev.off()
 } else {
-  # GO
   go_res <- tryCatch({
     clusterProfiler::enrichGO(gene = entrez_ids, OrgDb = org.Hs.eg.db, ont = "BP", readable = TRUE)
   }, error = function(e) {
@@ -254,33 +203,9 @@ if (length(entrez_ids) == 0) {
     plot.new(); text(0.5, 0.5, "No GO results", cex = 2)
     dev.off()
   }
-
-  # KEGG (note: enrichKEGG requires ENTREZ IDs)
-  kegg_res <- tryCatch({
-    clusterProfiler::enrichKEGG(gene = entrez_ids, organism = "hsa")
-  }, error = function(e) {
-    warning("enrichKEGG failed: ", e$message)
-    NULL
-  })
-
-  if (!is.null(kegg_res) && nrow(as.data.frame(kegg_res)) > 0) {
-    tiff(kegg_path, width = 1800, height = 1800, res = 300)
-    tryCatch({
-      print(clusterProfiler::dotplot(kegg_res, showCategory = 10) + ggplot2::ggtitle("KEGG Pathways"))
-    }, error = function(e) {
-      plot.new(); text(0.5, 0.5, paste("KEGG plot error:", e$message), cex = 1.2)
-    })
-    dev.off()
-  } else {
-    tiff(kegg_path, width = 1800, height = 1800, res = 300)
-    plot.new(); text(0.5, 0.5, "No KEGG results", cex = 2)
-    dev.off()
-  }
 }
 
-# ---------- Multi-panel PDF report ----------
-pdf("results/report.pdf", width = 11, height = 8.5)
-# Try to read tiffs; if unavailable show message
+pdf(file.path(outdir, "report.pdf"), width = 11, height = 8.5)
 safe_read_tiff_plot <- function(path, label) {
   if (!file.exists(path)) {
     plot.new(); text(0.5, 0.5, paste(label, "missing"), cex = 1.5)
@@ -298,28 +223,31 @@ safe_read_tiff_plot <- function(path, label) {
   grid::grid.raster(img, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
 }
 
-# Layout: 2x2 panels; use grid.arrange with grobs
 library(grid)
 library(gridExtra)
 
-# Panel 1: Heatmap
 grid.newpage()
-pushViewport(viewport(layout = grid.layout(2, 2)))
-# panel positions
-viewport.plot <- function(row, col, label, path) {
-  vp <- viewport(layout.pos.row = row, layout.pos.col = col)
+pushViewport(viewport(layout = grid.layout(2, 4)))
+viewport.plot <- function(row, cols, label, path, letter = NULL) {
+  vp <- viewport(layout.pos.row = row, layout.pos.col = cols)
   pushViewport(vp)
   par(mai = c(0.5,0.5,0.5,0.5))
   safe_read_tiff_plot(path, label)
+  if (!is.null(letter)) {
+    grid::grid.text(
+      letter,
+      x = unit(0.02, "npc"), y = unit(0.98, "npc"),
+      just = c("left", "top"),
+      gp = grid::gpar(fontsize = 20, fontface = "bold")
+    )
+  }
   popViewport()
 }
 
-viewport.plot(1, 1, "Heatmap", heatmap_path)
-viewport.plot(1, 2, "Volcano", volcano_path)
-viewport.plot(2, 1, "GO", go_path)
-viewport.plot(2, 2, "KEGG", kegg_path)
+viewport.plot(1, 1:2, "Heatmap", heatmap_path, "A")
+viewport.plot(1, 3:4, "Volcano", volcano_path, "B")
+viewport.plot(2, 2:3, "GO", go_path, "C")
 
 dev.off()
 
-# End of script: print status to stdout for Snakemake logs
 cat("run_deseq2.R completed\n")

@@ -1,0 +1,28 @@
+Package: OmicChainPipeline
+Type: Project
+Title: OmicChain DESeq2 analysis pipeline dependencies
+Description: Not a real R package to install -- this file exists only so
+    that renv can track the exact packages this pipeline depends on (see
+    run_deseq2.R), including packages loaded dynamically in a loop
+    (require(pkg, character.only = TRUE)), which renv's automatic
+    dependency scanner cannot detect on its own. Used with
+    renv::snapshot(type = "explicit"). Rsubread aligns and counts the
+    FASTQ files (step "Data & reference"): it is part of the certified
+    R environment too.
+Imports:
+    DESeq2,
+    tibble,
+    dplyr,
+    ggplot2,
+    pheatmap,
+    RColorBrewer,
+    clusterProfiler,
+    org.Hs.eg.db,
+    AnnotationDbi,
+    gridExtra,
+    tiff,
+    BiocManager,
+    Biobase,
+    apeglm,
+    ggrepel,
+    Rsubread
