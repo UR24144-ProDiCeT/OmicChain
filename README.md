@@ -88,6 +88,7 @@ or use the Verify step of the application, or the public page
 ## Tests
 
 ```
+pip install -r requirements-dev.txt   (test-only packages)
 python tests/run_all.py fast        (no R needed: a mock Rscript stands in for DESeq2; Linux / macOS)
 python tests/run_all.py portable    (pure Python; also on Windows)
 python tests/run_all.py upstream    (real Rsubread on small simulated genomes; R + Bioconductor)

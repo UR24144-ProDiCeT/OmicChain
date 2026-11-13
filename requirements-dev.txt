@@ -1,0 +1,5 @@
+# Extra packages needed only to run the tests (pip install -r requirements.txt -r requirements-dev.txt).
+eth-tester[py-evm]>=0.12
+pypdf>=4
+rocrate>=0.11
+roc-validator>=0.6
