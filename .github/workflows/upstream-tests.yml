@@ -13,6 +13,10 @@ jobs:
   upstream:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      # The repository's .Rprofile activates renv (the user's pinned DESeq2 environment).
+      # These tests only need Rsubread, installed below: renv is switched off here.
+      RENV_CONFIG_AUTOLOADER_ENABLED: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
