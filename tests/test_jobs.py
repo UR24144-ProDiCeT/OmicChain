@@ -55,7 +55,10 @@ oj.HEARTBEAT_STALE = 4
 j5 = oj.start(ROOT, [PY, "-c", "import time; time.sleep(60)"], label="Killed")
 time.sleep(1.0)
 pid = oj.status(ROOT, j5)["wrapper_pid"]
-os.killpg(os.getpgid(pid), signal.SIGKILL)
+if os.name == "nt":
+    subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
+else:
+    os.killpg(os.getpgid(pid), signal.SIGKILL)
 time.sleep(5)
 s = oj.status(ROOT, j5)
 check("4. killed without a result -> interrupted (no heartbeat any more)", s["status"] == "interrupted", s)
