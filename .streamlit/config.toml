@@ -1,0 +1,22 @@
+# OmicChain -- Streamlit settings.
+#
+# SECURITY: the application is reachable from THIS computer only. Without this, Streamlit
+# listens on every network interface: anyone on the same network could open your OmicChain,
+# publish with your key or start tasks. Do not change "address" unless you know why
+# (and then protect the access yourself: VPN, reverse proxy with authentication).
+[server]
+address = "127.0.0.1"
+headless = false
+maxUploadSize = 2000   # MB: count matrices and crates
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+# Look of the application (kept in tune with omicchain_ui_style.py).
+[theme]
+base = "light"
+primaryColor = "#0f766e"
+backgroundColor = "#f4f6f7"
+secondaryBackgroundColor = "#eef1f3"
+textColor = "#17242b"

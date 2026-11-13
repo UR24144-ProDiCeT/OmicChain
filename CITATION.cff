@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use OmicChain, please cite it as below."
+title: "OmicChain: certified, verifiable RNA-seq differential expression analyses"
+type: software
+authors:
+  - family-names: Guichet
+    given-names: Pierre-Olivier
+    orcid: "https://orcid.org/0000-0003-0115-2199"
+    affiliation: "UR24144 ProDiCeT, Université de Poitiers / CHU de Poitiers, France"
+version: 1.0.0-rc1
+date-released: 2026-11-13
+license: LGPL-3.0-only
+repository-code: "https://github.com/UR24144-ProDiCeT/OmicChain"
+url: "https://ur24144-prodicet.github.io/OmicChain/"
+keywords:
+  - RNA-seq
+  - differential expression
+  - reproducibility
+  - research integrity
+  - provenance
+  - blockchain
+  - RO-Crate
+abstract: >-
+  OmicChain runs an RNA-seq differential expression analysis (Rsubread, DESeq2) from a public study,
+  FASTQ files or a count matrix, hashes every component (code, parameters, input data, data origin, R
+  environment, results) into one composite SHA-256 fingerprint, publishes it on the Base blockchain and
+  produces a certificate and an RO-Crate. Anyone can check the fingerprint and re-run the analysis, from
+  the expression table or from the raw data.

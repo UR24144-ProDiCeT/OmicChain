@@ -1,0 +1,21 @@
+# Python dependencies of OmicChain (Streamlit app + Snakemake pipelines).
+#
+# Supported ranges: each package is bounded below (features OmicChain uses) and above (the next
+# major version, not tested). For an install identical to the tested one, use
+# requirements.lock.txt instead:  pip install -r requirements.lock.txt
+streamlit>=1.50,<2
+pandas>=2.2,<4
+numpy>=1.26,<3
+altair>=5,<7
+python-dotenv>=1,<2
+web3>=6,<9
+pillow>=10,<13
+reportlab>=4,<6
+snakemake>=8,<10
+
+# ORCID identity link (omicchain_identity.py): verification of ORCID-signed tokens
+pyjwt[crypto]>=2.8,<3
+cryptography>=42        # older versions have known security fixes missing
+
+# Public data retrieval (omicchain_fetch.py)
+requests>=2.31,<3

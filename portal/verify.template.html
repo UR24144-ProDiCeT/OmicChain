@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<!--
+  OmicChain — public fingerprint verification page.
+
+  Self-contained: no external script, stylesheet or font. It only talks to a
+  public JSON-RPC node (read-only calls) and holds no key of any kind.
+
+  This is a TEMPLATE. Run `python build_portal.py` to inject the contract
+  addresses and produce portal/index.html. Edit the template, not the result.
+
+  This software is licensed under the GNU LGPL v3.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https: http://localhost:* http://127.0.0.1:*">
+<title>OmicChain — Verify a fingerprint</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1d2430; --muted:#5f6b7a; --line:#d9dee5;
+          --accent:#1f4e8c; --ok:#1b6e3a; --okbg:#e6f4ea; --bad:#a1262b; --badbg:#fce8e8;
+          --warn:#8a5a00; --warnbg:#fff4de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12161c; --card:#1b212a; --text:#e6eaf0; --muted:#9aa6b5; --line:#2e3744;
+            --accent:#7fb0ee; --ok:#7ad69b; --okbg:#16301f; --bad:#ff9a9e; --badbg:#3a1a1c;
+            --warn:#f0c36d; --warnbg:#35290f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.6rem; margin:0 0 4px; }
+  h1 span { color:var(--muted); font-weight:400; font-size:1.1rem; }
+  h2 { font-size:1.05rem; margin:0 0 8px; }
+  .lead { color:var(--muted); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px;
+          padding:18px; margin-bottom:16px; }
+  label { display:block; font-weight:600; margin:0 0 14px; }
+  label small { font-weight:400; color:var(--muted); }
+  input, select { display:block; width:100%; margin-top:6px; padding:9px 10px; font:inherit;
+                  color:var(--text); background:var(--bg); border:1px solid var(--line);
+                  border-radius:6px; }
+  input.mono, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+                      font-size:.85rem; word-break:break-all; }
+  button { font:inherit; font-weight:600; padding:10px 18px; border:0; border-radius:6px;
+           background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--accent); border:1px solid var(--accent);
+                     margin-left:8px; }
+  button:disabled { opacity:.55; cursor:default; }
+  details { margin-top:14px; color:var(--muted); }
+  details summary { cursor:pointer; }
+  .note { font-size:.88rem; color:var(--muted); margin:6px 0 0; }
+  #result .banner { border-radius:8px; padding:12px 14px; font-weight:600; margin-bottom:12px; }
+  .ok   { background:var(--okbg);  color:var(--ok); }
+  .bad  { background:var(--badbg); color:var(--bad); }
+  .warn { background:var(--warnbg); color:var(--warn); }
+  dl { margin:0; display:grid; grid-template-columns:max-content 1fr; gap:6px 16px; }
+  dt { color:var(--muted); }
+  dd { margin:0; min-width:0; }
+  a { color:var(--accent); }
+  .event + .event { border-top:1px solid var(--line); margin-top:14px; padding-top:14px; }
+  ul.limits { margin:6px 0 0; padding-left:20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>OmicChain <span>fingerprint verification</span></h1>
+  <p class="lead">Check that an analysis fingerprint was published on the blockchain, and when.</p>
+
+  <div class="card">
+    <label>Composite fingerprint (SHA-256)
+      <input id="hash" class="mono" autocomplete="off" spellcheck="false"
+             placeholder="64 hexadecimal characters">
+    </label>
+    <label>Transaction ID <small>(optional — makes the check instant)</small>
+      <input id="tx" class="mono" autocomplete="off" spellcheck="false"
+             placeholder="0x… as printed on the certificate">
+    </label>
+    <label>Network
+      <select id="net"></select>
+    </label>
+    <button id="go" type="button">Verify</button>
+    <button id="cancel" type="button" class="secondary" hidden>Cancel search</button>
+    <details>
+      <summary>Advanced</summary>
+      <label style="margin-top:10px">RPC endpoint
+        <input id="rpc" class="mono" autocomplete="off" spellcheck="false">
+      </label>
+      <p class="note">The public Base endpoints are rate-limited. You may use your own node
+        or provider, but this page trusts whatever that endpoint answers.</p>
+    </details>
+  </div>
+
+  <div id="result" aria-live="polite"></div>
+
+  <div class="card">
+    <h2>What this page checks — and what it does not</h2>
+    <p class="note" style="margin-top:0">It confirms that this exact fingerprint was published to the
+      OmicChain proof contract, at which block and time, and by which address.</p>
+    <ul class="limits note">
+      <li>It does <strong>not</strong> check the analysis files themselves. To verify them, use the
+        RO-Crate that accompanies the certificate and run
+        <span class="mono">python omicchain_core.py verify &lt;folder&gt; --expected &lt;fingerprint&gt;</span>.</li>
+      <li>It does not tell you <em>who</em> the publisher is: an address is not an identity.</li>
+      <li>The contract only records that a fingerprint existed at that time; it makes no claim about
+        whether the analysis is scientifically sound.</li>
+    </ul>
+  </div>
+</main>
+
+<script>
+"use strict";
+
+// Injected by build_portal.py (between the markers). Never put a key here.
+const CONFIG = /*CONFIG_START*/{"topic0":"","networks":{}}/*CONFIG_END*/;
+
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const has = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+const toHex = (n) => "0x" + n.toString(16);
+
+const WINDOW = 10000;        // blocks per request when a wide search is refused
+const MIN_WINDOW = 500;      // never split below this
+const MAX_WINDOWS = 3000;    // give up beyond this many requests
+const CONCURRENCY = 4;
+
+// ---------------------------------------------------------------- inputs
+
+function normHash(v) {
+  v = String(v || "").trim().toLowerCase();
+  if (v.startsWith("0x")) v = v.slice(2);
+  return /^[0-9a-f]{64}$/.test(v) ? v : null;
+}
+
+// "" = empty (allowed), null = invalid
+function normTx(v) {
+  v = String(v || "").trim().toLowerCase();
+  if (!v) return "";
+  if (!v.startsWith("0x")) v = "0x" + v;
+  return /^0x[0-9a-f]{64}$/.test(v) ? v : null;
+}
+
+// ------------------------------------------------------------------- RPC
+
+class RpcError extends Error {
+  constructor(message, code) { super(message); this.code = code; }
+}
+
+async function rpcCall(url, method, params, tries = 4) {
+  let delay = 500;
+  for (let attempt = 1; ; attempt++) {
+    let resp;
+    try {
+      resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+    } catch (e) {
+      throw new RpcError("Could not reach the RPC endpoint (network error, or blocked by the browser's cross-origin policy).", "network");
+    }
+    if (resp.status === 429 && attempt < tries) { await sleep(delay); delay *= 2; continue; }
+    if (!resp.ok) throw new RpcError("The RPC endpoint answered HTTP " + resp.status + ".", "http");
+    let body;
+    try { body = await resp.json(); }
+    catch (e) { throw new RpcError("The RPC endpoint returned something that is not JSON.", "format"); }
+    if (body && body.error) throw new RpcError(String(body.error.message || "RPC error"), body.error.code);
+    return body ? body.result : null;
+  }
+}
+
+async function assertChain(net, rpcUrl) {
+  const id = parseInt(await rpcCall(rpcUrl, "eth_chainId", []), 16);
+  if (id !== net.chainId) {
+    throw new RpcError("This RPC endpoint is on chain " + id + ", but " + net.label +
+                       " is chain " + net.chainId + ". Check the endpoint in Advanced.", "chain");
+  }
+}
+
+// ----------------------------------------------------------------- events
+
+// Layout of HashPublished(address indexed publisher, bytes32 indexed hash, uint256 timestamp)
+function decodeEvent(log) {
+  if (!log || !Array.isArray(log.topics) || log.topics.length !== 3) return null;
+  if (String(log.topics[0]).toLowerCase() !== CONFIG.topic0.toLowerCase()) return null;
+  let timestamp = null;
+  try { timestamp = Number(BigInt(log.data)); } catch (e) { /* leave null */ }
+  return {
+    publisher: "0x" + String(log.topics[1]).slice(-40).toLowerCase(),
+    hash: String(log.topics[2]).toLowerCase().replace(/^0x/, ""),
+    timestamp,
+    block: parseInt(log.blockNumber, 16),
+    tx: String(log.transactionHash).toLowerCase(),
+    index: parseInt(log.logIndex, 16),
+  };
+}
+
+// ------------------------------------------------------- lookup by tx id
+
+async function findByTx(net, rpcUrl, hash, tx) {
+  const receipt = await rpcCall(rpcUrl, "eth_getTransactionReceipt", [tx]);
+  if (!receipt) return { kind: "tx-not-found" };
+  if (receipt.status !== "0x1") return { kind: "tx-failed" };
+  // Only events emitted BY THE CONFIGURED CONTRACT count: anyone can deploy a
+  // contract emitting an identical event.
+  const events = (receipt.logs || [])
+    .filter((l) => String(l.address).toLowerCase() === net.contract.toLowerCase())
+    .map(decodeEvent)
+    .filter(Boolean);
+  if (!events.length) return { kind: "no-event" };
+  const match = events.filter((e) => e.hash === hash);
+  return match.length ? { kind: "found", events: match }
+                      : { kind: "mismatch", published: events.map((e) => e.hash) };
+}
+
+// ----------------------------------------------------- lookup by hash only
+
+function getLogs(net, rpcUrl, hash, from, to) {
+  return rpcCall(rpcUrl, "eth_getLogs", [{
+    address: net.contract,
+    fromBlock: toHex(from),
+    toBlock: toHex(to),
+    topics: [CONFIG.topic0, null, "0x" + hash],
+  }]);
+}
+
+// One window, split in two if the node refuses it (range / result limits).
+async function fetchWindow(net, rpcUrl, hash, from, to, ctl) {
+  if (ctl.cancelled) return [];
+  try {
+    return await getLogs(net, rpcUrl, hash, from, to);
+  } catch (e) {
+    if (e.code === "network" || e.code === "chain" || to - from + 1 <= MIN_WINDOW) throw e;
+    const mid = Math.floor((from + to) / 2);
+    const left = await fetchWindow(net, rpcUrl, hash, from, mid, ctl);
+    const right = await fetchWindow(net, rpcUrl, hash, mid + 1, to, ctl);
+    return left.concat(right);
+  }
+}
+
+async function scanInWindows(net, rpcUrl, hash, from, latest, ctl, onProgress) {
+  const windows = [];
+  for (let start = from; start <= latest; start += WINDOW) {
+    windows.push([start, Math.min(start + WINDOW - 1, latest)]);
+  }
+  if (windows.length > MAX_WINDOWS) {
+    throw new RpcError("The block range to search is too large for this endpoint (" + windows.length +
+      " requests). Enter the transaction ID shown on the certificate instead.", "range");
+  }
+  const found = [];
+  let next = 0, done = 0;
+  async function worker() {
+    while (next < windows.length && !ctl.cancelled) {
+      const [a, b] = windows[next++];
+      found.push(...(await fetchWindow(net, rpcUrl, hash, a, b, ctl)));
+      done++;
+      onProgress(done / windows.length);
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  if (ctl.cancelled) throw new RpcError("Search cancelled.", "cancelled");
+  return found;
+}
+
+async function findByHash(net, rpcUrl, hash, ctl, onProgress) {
+  const latest = parseInt(await rpcCall(rpcUrl, "eth_blockNumber", []), 16);
+  const from = net.deployBlock || 0;
+  let logs;
+  try {
+    logs = await getLogs(net, rpcUrl, hash, from, latest);   // one request if the node allows it
+  } catch (e) {
+    if (e.code === "network" || e.code === "chain") throw e;
+    logs = await scanInWindows(net, rpcUrl, hash, from, latest, ctl, onProgress);
+  }
+  const seen = new Set();
+  const events = logs.map(decodeEvent).filter(Boolean)
+    .filter((e) => e.hash === hash)
+    .filter((e) => { const k = e.tx + ":" + e.index; if (seen.has(k)) return false; seen.add(k); return true; })
+    .sort((a, b) => a.block - b.block || a.index - b.index);
+  return events.length ? { kind: "found", events } : { kind: "not-found", from, latest };
+}
+
+// ------------------------------------------------------------- rendering
+
+function el(tag, props, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") node.className = v; else node.setAttribute(k, v);
+  }
+  for (const c of children) node.append(c);   // strings become text nodes: never HTML
+  return node;
+}
+
+function link(href, text) {
+  return el("a", { href, target: "_blank", rel: "noopener noreferrer", class: "mono" }, text);
+}
+
+function utc(ts) {
+  return ts == null ? "unknown" : new Date(ts * 1000).toISOString().replace("T", " ").slice(0, 19) + " UTC";
+}
+
+function show(state, banner, ...extra) {
+  const box = $("result");
+  box.replaceChildren();
+  box.dataset.state = state;
+  const cls = state === "found" ? "ok" : (state === "error" || state === "not-found" || state === "tx-failed") ? "bad" : "warn";
+  box.append(el("div", { class: "card" }, el("div", { class: "banner " + cls }, banner), ...extra));
+}
+
+function eventDetails(net, ev, latest) {
+  const conf = latest != null && latest >= ev.block ? latest - ev.block + 1 : null;
+  return el("div", { class: "event" }, el("dl", {},
+    el("dt", {}, "Published"), el("dd", {}, utc(ev.timestamp)),
+    el("dt", {}, "Block"), el("dd", {}, String(ev.block) + (conf != null ? "  (" + conf + " confirmations)" : "")),
+    el("dt", {}, "Network"), el("dd", {}, net.label),
+    el("dt", {}, "Publisher"), el("dd", {}, link(net.explorer + "/address/" + ev.publisher, ev.publisher)),
+    el("dt", {}, "Transaction"), el("dd", {}, link(net.explorer + "/tx/" + ev.tx, ev.tx)),
+    el("dt", {}, "Contract"), el("dd", {}, link(net.explorer + "/address/" + net.contract, net.contract)),
+  ));
+}
+
+// ------------------------------------------------------------------ main
+
+let ctl = { cancelled: false };
+
+function setBusy(busy) {
+  $("go").disabled = busy;
+  $("cancel").hidden = !busy;
+}
+
+async function run() {
+  const hash = normHash($("hash").value);
+  if (!hash) return show("error", "Enter a valid fingerprint: 64 hexadecimal characters (with or without 0x).");
+  const tx = normTx($("tx").value);
+  if (tx === null) return show("error", "The transaction ID must be 0x followed by 64 hexadecimal digits.");
+  const netKey = $("net").value;
+  if (!has(CONFIG.networks, netKey)) return show("error", "This page is not configured for any network.");
+  const net = CONFIG.networks[netKey];
+  const rpcUrl = ($("rpc").value || net.rpc).trim();
+  if (!/^https?:\/\//i.test(rpcUrl)) return show("error", "The RPC endpoint must start with https://");
+
+  ctl = { cancelled: false };
+  setBusy(true);
+  show("busy", "Checking the blockchain…");
+  try {
+    await assertChain(net, rpcUrl);
+    const onProgress = (p) => show("busy", "Searching the chain… " + Math.round(p * 100) + "%");
+    const out = tx ? await findByTx(net, rpcUrl, hash, tx)
+                   : await findByHash(net, rpcUrl, hash, ctl, onProgress);
+
+    if (out.kind === "found") {
+      let latest = null;
+      try { latest = parseInt(await rpcCall(rpcUrl, "eth_blockNumber", []), 16); } catch (e) { /* optional */ }
+      const n = out.events.length;
+      show("found", n > 1 ? "Fingerprint found — published " + n + " times" : "Fingerprint found on-chain",
+        el("p", { class: "mono" }, hash),
+        ...out.events.map((ev) => eventDetails(net, ev, latest)),
+        el("p", { class: "note" }, "The date is the block time recorded by the contract when the fingerprint was published."));
+    } else if (out.kind === "mismatch") {
+      show("mismatch", "This transaction exists, but it published a different fingerprint",
+        el("p", { class: "note" }, "You asked about:"), el("p", { class: "mono" }, hash),
+        el("p", { class: "note" }, "The transaction actually published:"),
+        ...out.published.map((h) => el("p", { class: "mono" }, h)));
+    } else if (out.kind === "tx-not-found") {
+      show("tx-not-found", "Transaction not found on " + net.label,
+        el("p", { class: "note" }, "Check the transaction ID and the selected network. A very recent transaction may not be visible yet."));
+    } else if (out.kind === "tx-failed") {
+      show("tx-failed", "This transaction failed: nothing was published.");
+    } else if (out.kind === "no-event") {
+      show("no-event", "This transaction did not publish anything to the OmicChain contract on " + net.label,
+        el("p", { class: "note" }, "Wrong transaction ID, wrong network, or a different contract."));
+    } else {
+      show("not-found", "No publication of this fingerprint found on " + net.label,
+        el("p", { class: "note" }, "Searched blocks " + out.from + " to " + out.latest + " of the contract " + net.contract +
+          ". If the certificate shows a transaction ID, enter it above."));
+    }
+  } catch (e) {
+    show("error", e.message || String(e));
+  } finally {
+    setBusy(false);
+  }
+}
+
+function init() {
+  const select = $("net");
+  for (const [key, net] of Object.entries(CONFIG.networks)) {
+    select.append(el("option", { value: key }, net.label));
+  }
+  if (!select.options.length) {
+    $("go").disabled = true;
+    return show("error", "This portal has no network configured. Run build_portal.py first.");
+  }
+  const params = new URLSearchParams(location.search);
+  const net = params.get("net");
+  if (net && has(CONFIG.networks, net)) select.value = net;
+  const syncRpc = () => { $("rpc").placeholder = CONFIG.networks[select.value].rpc; };
+  select.addEventListener("change", syncRpc);
+  syncRpc();
+  if (params.get("h")) $("hash").value = params.get("h");
+  if (params.get("tx")) $("tx").value = params.get("tx");
+  $("go").addEventListener("click", run);
+  $("cancel").addEventListener("click", () => { ctl.cancelled = true; });
+  for (const id of ["hash", "tx"]) {
+    $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+  }
+  if (params.get("h")) {                   // opened from a QR code / link
+    if (normHash($("hash").value)) run();  // verify straight away
+    else show("error", "The fingerprint in this link is not valid: expected 64 hexadecimal characters.");
+  }
+}
+
+init();
+</script>
+</body>
+</html>

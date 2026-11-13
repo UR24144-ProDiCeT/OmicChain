@@ -6,74 +6,46 @@ licenses. The rights of these components remain with their original authors.
 
 ---
 
-## Python Libraries
+## Python libraries
 
-- **Streamlit**
-  Created by Adrien Treuille, Thiago Teixeira, and Amanda Kelly and maintained by Snowflake Inc
-  License: Apache License 2.0  
-  https://www.apache.org/licenses/LICENSE-2.0
+| Library | Licence |
+|---|---|
+| Streamlit | Apache License 2.0 |
+| pandas | BSD 3-Clause |
+| NumPy | BSD 3-Clause |
+| Altair | BSD 3-Clause |
+| Snakemake | MIT |
+| web3.py, eth-account | MIT |
+| Pillow | MIT-CMU (HPND) |
+| ReportLab (open-source edition) | BSD |
+| PyJWT | MIT |
+| cryptography | Apache License 2.0 or BSD 3-Clause |
+| Requests | Apache License 2.0 |
+| python-dotenv | BSD 3-Clause |
 
-- **Pandas**  
-  Created by Wes McKinney and maintained by the open source community and the pandas development team overseen by NumFOCUS
-  License: BSD 3-Clause  
-  https://opensource.org/licenses/BSD-3-Clause
+## R packages
 
-- **Web3.py**  
-  Developed and maintained by the Ethereum Foundation, key contributors from Piper Merriam and the Ethereum Foundation development team
-  License: MIT  
-  https://opensource.org/licenses/MIT
+| Package | Licence |
+|---|---|
+| DESeq2 | LGPL (>= 3) |
+| Rsubread | GPL (>= 3) |
+| apeglm | GPL-2 |
+| clusterProfiler, org.Hs.eg.db, AnnotationDbi, Biobase, BiocManager | Artistic License 2.0 |
+| ggplot2, dplyr, tibble, renv | MIT |
+| ggrepel | GPL-3 |
+| pheatmap | GPL-2 |
+| gridExtra | GPL (>= 2) |
+| RColorBrewer | Apache License 2.0 |
+| tiff | GPL-2 or GPL-3 |
 
-- **hashlib**  
-  Part of the Python standard library, maintained by the Python Software Foundation and the Python core developer community
-  License: Python Software Foundation License  
-  https://docs.python.org/3/license.html
+OmicChain runs these packages as separate programs (Rscript) and does not include or modify
+their code.
 
----
+## Data and services
 
-## R Libraries
+- **GENCODE** reference genome and annotation (EMBL-EBI): freely available, see the GENCODE terms.
+- **ENA** (European Nucleotide Archive) and **NCBI GEO**: public sequence and study metadata.
+- **Base** blockchain, reached through an RPC provider chosen by the user (for example Infura).
+- **ORCID** public API, for the optional identity link.
 
-- **DESeq2**  
-  Part of the Bioconductor project, created by Michael Love, Wolfgang Huber, Simon Anders and maintained by Michael Love
-  License: GNU Lesser General Public License v3 (LGPL v3 or later)  
-  https://www.gnu.org/licenses/lgpl-3.0.html
-
-- **clusterProfiler**  
-  Part of the Bioconductor project, created and maintained by Guangchuang Yu
-  License: Artistic License 2.0  
-  https://opensource.org/licenses/Artistic-2.0
-
-- **org.Hs.eg.db** 
-  Part of the annotation packages provided by Bioconductor, based on data from NCBI Entrez Gene and maintained by the Bioconductor Core Team 
-  License: Artistic License 2.0  
-  https://opensource.org/licenses/Artistic-2.0
-
-- **pheatmap**
-  Available on CRAN (Comprehensive R Archive Network), created and maintained by Raivo Kolde  
-  License: GNU General Public License v2 (GPL-2)  
-  https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-
----
-
-## Blockchain / Web3
-
-- **OpenZeppelin Contracts** 
-  Created and maintained by OpenZeppelin and open-source community, founded by Demian Brener, Manuel Araoz, and Franco Zeoli 
-  License: MIT  
-  https://opensource.org/licenses/MIT
-
-- **Blockchain RPC access (Base Mainnet via Infura)** 
-  Created and maintained by Infura, part of ConsenSys founded by Joseph Lubin 
-  Infrastructure service used for network access.  
-
----
-
-## Decentralized Storage
-
-- **IPFS / Pinata SDK**  
-  IPFS : created by Juan Benet, developed and maintained by Protocol Labs and open source community
-  PINATA : Created and maintained by Pinata Technologies, founded by Kyle Tut and Matt Ober
-  Licenses: MIT / Apache 2.0  
-  https://opensource.org/licenses/MIT  
-  https://www.apache.org/licenses/LICENSE-2.0
-
----
+The licence stated by each project is the authoritative one; this list is a summary.

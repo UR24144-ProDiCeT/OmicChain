@@ -1,238 +1,103 @@
-# 🧬 OmicChain
+# OmicChain
 
-![OmicChain Banner](omicchain_banner.jpg)
+![OmicChain banner](omicchain_banner.jpg)
 
-**Proof of Integrity for Bioinformatic RNASeq Pipeline**
+**Certified, verifiable RNA-seq differential expression analyses.**
 
-OmicChain is a software that bridges bioinformatics and blockchain technology, providing immutable proof of integrity for RNASeq analysis pipelines. By combining automated workflow execution with blockchain certification and NFT minting, OmicChain ensures complete traceability and verifiability of scientific results.
+[![tests](https://github.com/UR24144-ProDiCeT/OmicChain/actions/workflows/tests.yml/badge.svg)](https://github.com/UR24144-ProDiCeT/OmicChain/actions/workflows/tests.yml)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](LICENSE.txt)
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.0+-red.svg)](https://streamlit.io/)
+OmicChain runs a differential expression analysis and makes it checkable by anyone. Every component of
+the analysis is hashed; the hashes are combined into one **composite SHA-256 fingerprint**, which is
+published on the [Base](https://base.org) blockchain as a public, dated record. A PDF certificate and
+an [RO-Crate](https://www.researchobject.org/ro-crate/) are produced; from the crate, a reviewer can
+check the fingerprint and re-run the analysis, down to the raw sequencing files.
 
-## ✨ Features
+It is a local application (Streamlit) meant for biologists as well as bioinformaticians, on Windows,
+Linux and macOS.
 
-- 🔬 **Automated RNASeq Pipeline**: Execute complete differential expression analysis using Snakemake and DESeq2
-- 🔐 **Cryptographic Integrity**: Generate SHA-256 hashes for pipeline components and results
-- ⛓️ **Blockchain Certification**: Publish analysis proofs on Base blockchain (Mainnet or Testnet)
-- 🎨 **NFT Minting**: Create NFTs certifying your analysis results with IPFS metadata storage
-- 📊 **Comprehensive Outputs**: Generate heatmaps, volcano plots, GO/KEGG enrichment analyses
-- 🖥️ **User-Friendly Interface**: Streamlit-based web interface for seamless workflow execution
+## What it does
 
-## 🎯 Use Cases
+1. **Data & reference** — start from a public study (GEO / SRA accession: FASTQ files are downloaded
+   from the ENA and checked against its md5), your own FASTQ files, or a count matrix. FASTQ files are
+   aligned and counted with Rsubread on a GENCODE reference that OmicChain downloads, builds and
+   fingerprints. Samples can be annotated in the application.
+2. **Analysis** — choose the compared samples and an optional covariate (`~ covariate + group`),
+   look at a quality control (PCA, library sizes, alignment rates) and at the effect of the thresholds,
+   then run DESeq2 (Snakemake).
+3. **Blockchain proof** — the fingerprint is published by your own account on Base (testnet or mainnet).
+4. **Certificate** — a PDF with an annex listing every raw file and its checksum, and an RO-Crate
+   holding the certified files.
+5. **Verify** — check a fingerprint on-chain, and re-run a crate: from the expression table (minutes)
+   or from the raw data (FASTQ downloaded again or provided, or the original matrix).
 
-- **Reproducible Research**: Ensure your RNASeq analyses are verifiable and traceable
-- **Scientific Integrity**: Create immutable proof of your computational methods
-- **Data Provenance**: Track the complete lifecycle of your bioinformatic workflows
-- **Regulatory Compliance**: Meet requirements for transparent and auditable analyses
-- **Collaborative Science**: Share certified results with confidence
+## What is certified
 
-## 📋 Requirements
+| Component | Content |
+|---|---|
+| Analysis code | `Snakefile`, `run_deseq2.R`, `de_core.R` |
+| Parameters | adjusted p-value and log2 fold-change thresholds, covariate |
+| Input data | expression table and sample metadata |
+| Data origin | accession, each raw file with its checksum, reference and index fingerprints, alignment and counting settings, SHA-256 of the alignment / counting code, your sample annotations |
+| R environment | `renv.lock` |
+| Results | table of differentially expressed genes |
 
-### Software Dependencies
+The blockchain proves that this fingerprint existed at a date and was published by an address
+(optionally linked to an ORCID iD). It does not prove that an analysis is scientifically right.
 
-**Python packages:**
-```bash
-pip install streamlit web3 python-dotenv requests pandas pillow
+## Install
+
+Python 3.10 or later (tested with 3.13) and R 4.5.x (the R packages are pinned to Bioconductor 3.22).
+
 ```
-
-**Snakemake:**
-```bash
-mamba install -c bioconda snakemake
-```
-
-**R dependencies:**
-```r
-install.packages(c("pheatmap", "RColorBrewer", "tibble", "dplyr", "ggplot2"))
-BiocManager::install(c("DESeq2", "clusterProfiler", "org.Hs.eg.db", "tiff"))
-```
-```Do not forget to add Rscipt to the path to avoid error messages```
-
-### Required Project Files
-
-Ensure these files are in your project directory:
-- `Snakefile` - Snakemake workflow definition
-- `run_deseq2.R` - DESeq2 analysis script
-- `contract_abi_proof.json` - ABI for blockchain proof contract
-- `contract_abi_nft.json` - ABI for NFT contract
-- `omicchain_banner.jpg` - UI banner image
-- `.env` - Configuration file (see below)
-
-### Blockchain Requirements
-
-**Wallet Setup:**
-- Any EVM-compatible wallet (MetaMask, Rabby, Base Wallet)
-- Wallet address and private key
-
-**ETH Funds:**
-- **Mainnet**: Real ETH on Base network for gas fees
-- **Testnet**: Free testnet ETH from [Alchemy Base Sepolia Faucet](https://www.alchemy.com/faucets/base-sepolia)
-
-
-## ⚙️ Configuration
-
-**Infura and Pinata keys:**
-Create accounts and get your keys to complete your .env file
-
-Create a `.env` file in your project directory:
-
-```env
-# IPFS/Pinata Configuration
-PINATA_API_KEY=your_pinata_api_key
-PINATA_API_SECRET=your_pinata_secret_key
-
-# Wallet Configuration
-PRIVATE_KEY=your_wallet_private_key
-ACCOUNT_ADDRESS=your_wallet_address
-
-# RPC Endpoints (Infura)
-INFURA_URL_MAINNET=https://base-mainnet.infura.io/v3/your_project_id
-INFURA_URL_TESTNET=https://base-sepolia.infura.io/v3/your_project_id
-
-# Smart Contracts
-CONTRACT_PROOF_ADDRESS_MAINNET=0x...
-CONTRACT_PROOF_ADDRESS_TESTNET=0x...
-CONTRACT_NFT_ADDRESS_MAINNET=0x...
-CONTRACT_NFT_ADDRESS_TESTNET=0x...
-```
-
-⚠️ **Security Warning**: Never commit your `.env` file to version control. Add it to `.gitignore`.
-
-## 🚀 Quick Start
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/ProDiCeT/OmicChain.git
-cd OmicChain
-```
-
-2. **Install dependencies:**
-```bash
 pip install -r requirements.txt
-```
-
-3. **Configure your `.env` file** with your credentials
-
-4. **Launch OmicChain:**
-```bash
+Rscript -e "renv::restore()"
+copy .env.example .env          (macOS / Linux: cp .env.example .env), then fill it in
 streamlit run OmicChain.py
 ```
 
-5. **Access the interface** at `http://localhost:8501`
+Details, including the exact R environment (`renv`), are in [INSTALL.md](INSTALL.md). Read
+[SECURITY.md](SECURITY.md) before using a real account: the application holds a publishing key.
 
-## 📖 Usage Workflow
+To try it without sequencing data, choose "A count matrix" in the first step and load
+`examples/simulated_counts.tsv`.
 
-### 1. Execute Pipeline
-- Upload your Snakefile and R script
-- Provide expression table (TSV format supplied in the repository as example but you can generate a new one with count_matrix_generator.py and adjust settings)
-- Select control and treatment samples
-- Execute the automated pipeline
-
-### 2. Publish Blockchain Proof
-- Select Base Mainnet or Testnet
-- Publish the combined hash to the blockchain
-- Receive transaction confirmation and block number
-
-### 3. Mint NFT Certificate
-- Provide recipient address
-- Mint NFT with embedded pipeline metadata
-- View your certified analysis on OpenSea
-
-## 📊 Pipeline Outputs
-
-All results are generated in the `/results` folder:
-- `heatmap.png` - Expression heatmap
-- `volcano_plot.png` - Differential expression volcano plot
-- `go_enrichment.png` - GO enrichment analysis
-- `kegg_enrichment.png` - KEGG pathway enrichment
-- `top_genes.tsv` - Top 1000 differentially expressed genes
-- `combined_figures.png` - Combined visualization for NFT
-- `report.pdf` - Complete analysis report
-- Hash files for integrity verification
-
-## 🔗 Blockchain Integration
-
-OmicChain integrates with:
-- **Base Blockchain** (Ethereum Layer 2)
-- **IPFS** via Pinata for decentralized storage
-- **Smart Contracts** for proof publication and NFT minting
-- **OpenSea** for NFT visualization
-
-## 🏗️ Architecture
+## Verify a certified analysis
 
 ```
-OmicChain
-│
-├── Data Input Layer
-│   ├── Snakefile
-│   ├── R Scripts
-│   └── Expression Data
-│
-├── Processing Layer
-│   ├── Snakemake Workflow
-│   ├── DESeq2 Analysis
-│   └── Visualization
-│
-├── Integrity Layer
-│   ├── SHA-256 Hashing
-│   └── Hash Aggregation
-│
-├── Blockchain Layer
-│   ├── Base Network
-│   ├── Smart Contracts
-│   └── Transaction Management
-│
-└── Certification Layer
-    ├── IPFS Storage
-    ├── NFT Minting
-    └── Metadata Generation
+python omicchain_verify.py omicchain-crate.zip --expected <fingerprint read on-chain>
+python omicchain_verify.py omicchain-crate.zip --from-raw          (from the raw data)
 ```
 
-## 👥 Contributing
+or use the Verify step of the application, or the public page
+<https://ur24144-prodicet.github.io/OmicChain/> to look a fingerprint up on-chain. See
+[VERIFY.md](VERIFY.md).
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+## Documentation
 
-## 📄 License
+| | |
+|---|---|
+| [INSTALL.md](INSTALL.md) | installation |
+| [VERIFY.md](VERIFY.md) | verifying and re-running a certified analysis |
+| [SECURITY.md](SECURITY.md) | what protects an installation, what is your responsibility |
+| [IDENTITY.md](IDENTITY.md) | linking the publishing account to an ORCID iD |
+| [PORTAL.md](PORTAL.md) | the public verification page |
+| [PLUGIN.md](PLUGIN.md) | certifying another pipeline with the same core (`omicchain.json`) |
+| [CHANGELOG.md](CHANGELOG.md) | versions |
 
-This software is licensed under the GNU LGPL v3.
-© 2026 Pierre-Olivier Guichet / UR24144 ProDiCeT, University of Poitiers
+## Tests
 
-## 📬 Contact
-
-**Author**: Pierre-Olivier Guichet, PhD  
-**Email**: pierre-olivier.guichet@inserm.fr  
-**Institution**: UR24144 ProDiCeT, University of Poitiers
-
-## 🙏 Acknowledgments
-
-- Snakemake workflow management system
-- DESeq2 for differential expression analysis
-- Base blockchain for scalable Layer 2 infrastructure
-- Pinata for IPFS infrastructure
-- Streamlit for the web interface
-
-## 📚 Citation
-
-If you use OmicChain in your research, please cite:
-
-```bibtex
-@software{omicchain2026,
-  author = {Guichet, Pierre-Olivier},
-  title = {OmicChain: Proof of Integrity for Bioinformatic RNASeq Pipeline},
-  year = {2026},
-  url = {https://github.com/UR24144-ProDiCeT/OmicChain},
-  version = {1.0}
-}
+```
+pip install -r requirements-dev.txt   (test-only packages)
+python tests/run_all.py fast        (no R needed: a mock Rscript stands in for DESeq2; Linux / macOS)
+python tests/run_all.py portable    (pure Python; also on Windows)
+python tests/run_all.py upstream    (real Rsubread on small simulated genomes; R + Bioconductor)
 ```
 
-## 🗺️ Roadmap
+## Citation and licence
 
-- [ ] Support for additional blockchain networks
-- [ ] Integration with more bioinformatic pipelines
-- [ ] Enhanced NFT metadata standards
-- [ ] Multi-omics support (Genomic, proteomic, metabolomic)
-- [ ] Decentralized storage options
+See [CITATION.cff](CITATION.cff). OmicChain is distributed under the GNU Lesser General Public
+License v3 ([LICENSE.txt](LICENSE.txt)); the smart contract `Proof.sol` is under the MIT licence.
+Third-party components: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
----
-
-**Made with love for open and reproducible science**
+© 2026 Pierre-Olivier Guichet — UR24144 ProDiCeT, Université de Poitiers / CHU de Poitiers.

@@ -1,0 +1,31 @@
+# Secrets: never in the repository (only .env.example)
+.env
+orcid_link.json
+
+# Python / R / Snakemake
+__pycache__/
+*.pyc
+.Rhistory
+.RData
+.snakemake/
+renv/library/
+renv/staging/
+
+# Data and results of the user's analyses (large, personal)
+/studies/
+/results/
+/jobs/
+/verify_runs/
+/expression_input.tsv
+/metadata.tsv
+/metadata_source.tsv
+/loaded_data.json
+/data_origin.json
+
+# Local environments and editor files
+.venv/
+venv/
+.Rproj.user/
+*.Rproj
+.vscode/
+.idea/

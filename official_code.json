@@ -1,0 +1,21 @@
+{
+  "schema": "omicchain.official-code/1",
+  "releases": [
+    {
+      "version": "0.9",
+      "files": {
+        "Snakefile": "e0576c58f271bc54669b7e448d77e0684b93d83c8b6ddf98cf4a0574f19078f6",
+        "run_deseq2.R": "cb91913179aac32d7392d5ec3131236ec7eb2c859a1bab1c82f31da9763e5698",
+        "de_core.R": "0aa7591c39967b8ddfcbdd5634d89c924b3255ffeb14bd48462dc7400d012cf8"
+      }
+    },
+    {
+      "version": "1.0.0-rc1",
+      "files": {
+        "Snakefile": "c1ea4eeb486ef8b7da42d52f8539bae8acfb220e35e487eeec77a9e7feccda96",
+        "run_deseq2.R": "28a3638f9e34575693f21d740420b942a40de76c2f925c703ee1ba092132da54",
+        "de_core.R": "6b0a67e354d8b20b59d82149d9c12c53c69145a745d5367a455722bd5376730d"
+      }
+    }
+  ]
+}
