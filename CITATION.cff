@@ -12,6 +12,10 @@ date-released: 2026-11-13
 license: LGPL-3.0-only
 repository-code: "https://github.com/UR24144-ProDiCeT/OmicChain"
 url: "https://ur24144-prodicet.github.io/OmicChain/"
+identifiers:
+  - type: swh
+    value: "swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e"
+    description: "Software Heritage archive of version 1.0.0-rc1 (commit 9d566ee0)"
 keywords:
   - RNA-seq
   - differential expression

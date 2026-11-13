@@ -100,4 +100,11 @@ See [CITATION.cff](CITATION.cff). OmicChain is distributed under the GNU Lesser 
 License v3 ([LICENSE.txt](LICENSE.txt)); the smart contract `Proof.sol` is under the MIT licence.
 Third-party components: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
+The source code is archived in [Software Heritage](https://www.softwareheritage.org/).
+Version 1.0.0-rc1: [`swh:1:dir:b29bc622…`](https://archive.softwareheritage.org/swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:f0f462c5eb8f2ad7f786c185178f7504758516d3;anchor=swh:1:rev:9d566ee089991538d96f3c99154d5dbabd1291d6)
+
+```
+swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:f0f462c5eb8f2ad7f786c185178f7504758516d3;anchor=swh:1:rev:9d566ee089991538d96f3c99154d5dbabd1291d6
+```
+
 © 2026 Pierre-Olivier Guichet — UR24144 ProDiCeT, Université de Poitiers / CHU de Poitiers.
