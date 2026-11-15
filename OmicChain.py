@@ -683,11 +683,12 @@ with tab3:
                         if orcid_env not in oidn.ORCID_BASES:
                             raise oidn.IdentityError("ORCID_ENV must be 'production' or 'sandbox'.")
                         _login_link = st.empty()
-                        _show_link = (lambda url: _login_link.info(
-                            f"[Open the ORCID login page]({url}) in your browser, then come back here.")) if IN_CONTAINER else None
+                        def _show_link(url):
+                            _login_link.info(f"[Open the ORCID login page]({url}) in your browser, then come back here.")
+                            oidn.webbrowser.open(url)
                         with st.spinner("Waiting for the ORCID login in your browser (up to 5 minutes)…"):
                             flow = oidn.run_login_flow(
-                                on_authorize_url=_show_link,
+                                on_authorize_url=_show_link if IN_CONTAINER else None,
                                 client_id=orcid_client_id, client_secret=orcid_client_secret,
                                 address=wallet_address, base_url=oidn.ORCID_BASES[orcid_env],
                                 port=ORCID_PORT, timeout=300,
