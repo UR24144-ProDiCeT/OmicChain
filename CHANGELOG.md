@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+**Added**
+- Reference container image (`Dockerfile`, `docker-compose.yml`, `DOCKER.md`), built, tested and published by
+  GitHub Actions. The build fails if the R environment of the image differs from `renv.lock`.
+- `renv.lock` at the root of the repository is now the complete environment (154 packages, R 4.5.1,
+  Bioconductor 3.22).
+- Tests with the real R packages: environment record, whole pipeline with DESeq2, verification (`tests/run_all.py real`).
+
+**Fixed**
+- R environment component: the record certified with each analysis (`renv.lock`) now lists the R version,
+  the Bioconductor release and every package the analysis depends on, with its version, wherever R loads
+  it from. Before, `renv::snapshot` only saw the project's private library, so on a computer where the
+  packages were installed elsewhere the certified record held `renv` alone. The certification now stops
+  if a package of the analysis is not installed.
+- The record holds nothing specific to the computer (name, version and source of each package, Unix line
+  endings), so that two computers with the same versions produce the same bytes.
+- Analyses certified before this change are still replayed with the former method by Verify.
+
 ## 1.0.0-rc1 — 2026-11
 
 A complete rewrite of the first public version.

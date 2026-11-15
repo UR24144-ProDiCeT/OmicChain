@@ -34,10 +34,9 @@ Rscript -e "renv::restore()"
 This installs renv (first run) and every package at the recorded version, including
 Rsubread (alignment and counting of FASTQ files, Data & reference tab).
 
-If you add Rsubread to an existing project instead (OmicChain versions before step 6e), run
+If the restore does not install everything (or on an existing project), run
 `Rscript install_dependencies.R` from the project folder: it installs what is missing and
-records the environment (`renv::snapshot`), which also clears the "project is out-of-sync"
-message.
+records the environment in `renv.lock`.
 It takes several minutes. Then check:
 
 ```

@@ -32,8 +32,8 @@ if (length(missing) > 0) {
   renv::install(to_install)
 }
 
-renv::snapshot(type = "explicit", prompt = FALSE)
-renv::status()
+status <- system2(file.path(R.home("bin"), "Rscript"), c("snapshot_renv.R", "renv.lock"))
+if (status != 0) stop("The R environment could not be recorded (snapshot_renv.R).")
 
 missing <- required[!vapply(required, requireNamespace, logical(1),
                             quietly = TRUE)]

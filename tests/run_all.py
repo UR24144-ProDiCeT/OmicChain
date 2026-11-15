@@ -4,6 +4,7 @@
   python tests/run_all.py portable   pure Python tests: also on Windows
   python tests/run_all.py upstream   tests with the real Rsubread (R + Bioconductor needed), long
   python tests/run_all.py all        fast + upstream
+  python tests/run_all.py real       R environment record + whole pipeline with the real DESeq2 (Docker image)
 """
 import subprocess, sys, time
 from pathlib import Path
@@ -14,8 +15,9 @@ FAST = PORTABLE + ["test_covariate", "test_verify", "test_data_origin", "test_id
                    "test_app_publish", "test_app_design", "test_app_explore", "test_app_matrix", "test_app_orcid",
                    "test_app_rerun", "test_app_rerun_raw"]
 UPSTREAM = ["test_reference", "test_upstream", "test_app_reference", "test_app_geo", "test_app_annotate",
-            "test_app_local", "test_replay"]
-GROUPS = {"portable": PORTABLE, "fast": FAST, "upstream": UPSTREAM, "all": FAST + UPSTREAM}
+            "test_app_local", "test_replay", "test_environment"]
+REAL = ["test_environment", "test_real_pipeline"]
+GROUPS = {"portable": PORTABLE, "fast": FAST, "upstream": UPSTREAM, "real": REAL, "all": FAST + UPSTREAM}
 
 
 def main(argv):

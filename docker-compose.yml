@@ -1,0 +1,12 @@
+# OmicChain in a container.   Start:  docker compose up      Stop:  Ctrl+C, or  docker compose down
+# The application is then at http://localhost:8501 (reachable from this computer only).
+services:
+  omicchain:
+    image: ghcr.io/ur24144-prodicet/omicchain:latest
+    build: .
+    ports:
+      - "127.0.0.1:8501:8501"   # application
+      - "127.0.0.1:8765:8765"   # ORCID sign-in callback
+    volumes:
+      - ./omicchain-data:/work   # your analyses, results and .env file
+      - ./omicchain-refs:/refs   # reference genomes and indexes (6 to 22 GB for the human indexes)

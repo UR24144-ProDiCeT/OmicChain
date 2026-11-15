@@ -78,6 +78,7 @@ or use the Verify step of the application, or the public page
 | | |
 |---|---|
 | [INSTALL.md](INSTALL.md) | installation |
+| [DOCKER.md](DOCKER.md) | running OmicChain, or verifying an analysis, in the reference container image |
 | [VERIFY.md](VERIFY.md) | verifying and re-running a certified analysis |
 | [SECURITY.md](SECURITY.md) | what protects an installation, what is your responsibility |
 | [IDENTITY.md](IDENTITY.md) | linking the publishing account to an ORCID iD |
