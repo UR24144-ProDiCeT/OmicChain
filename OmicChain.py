@@ -295,8 +295,9 @@ if ORCID_LINK_PATH.is_file():
         _orcid = None
 ous.header(network, ACCOUNT_ADDRESS, _orcid, image=ous.brand_image(BASE_DIR))
 
+IN_CONTAINER = bool(os.getenv("OMICCHAIN_CONTAINER"))
 _addr = st.get_option("server.address")
-if _addr not in ("127.0.0.1", "localhost", "::1"):
+if not IN_CONTAINER and _addr not in ("127.0.0.1", "localhost", "::1"):
     st.error("🔓 **This OmicChain is reachable from other computers on the network** (Streamlit server address: "
              f"{_addr or 'all interfaces'}). Anyone who can reach it could publish with your key or start tasks. "
              "Keep the file `.streamlit/config.toml` provided with OmicChain (address = \"127.0.0.1\") in the "
@@ -681,8 +682,12 @@ with tab3:
                             )
                         if orcid_env not in oidn.ORCID_BASES:
                             raise oidn.IdentityError("ORCID_ENV must be 'production' or 'sandbox'.")
+                        _login_link = st.empty()
+                        _show_link = (lambda url: _login_link.info(
+                            f"[Open the ORCID login page]({url}) in your browser, then come back here.")) if IN_CONTAINER else None
                         with st.spinner("Waiting for the ORCID login in your browser (up to 5 minutes)…"):
                             flow = oidn.run_login_flow(
+                                on_authorize_url=_show_link,
                                 client_id=orcid_client_id, client_secret=orcid_client_secret,
                                 address=wallet_address, base_url=oidn.ORCID_BASES[orcid_env],
                                 port=ORCID_PORT, timeout=300,

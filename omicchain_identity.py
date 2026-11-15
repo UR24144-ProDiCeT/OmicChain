@@ -413,7 +413,7 @@ def run_login_flow(*, client_id, client_secret, address, base_url, port=8765, ti
                 self._reply(400, "Rejected", "No authorization code.")
 
     try:
-        server = HTTPServer(("127.0.0.1", port), Handler)
+        server = HTTPServer(("0.0.0.0" if os.getenv("OMICCHAIN_CONTAINER") else "127.0.0.1", port), Handler)
     except OSError as exc:
         raise IdentityError(f"Cannot listen on port {port} for the ORCID callback: {exc}") from exc
 
