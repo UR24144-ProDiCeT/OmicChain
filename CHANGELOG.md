@@ -3,6 +3,13 @@
 ## Unreleased
 
 **Added**
+- Verdict `RESULTS EQUIVALENT` (exit code 3): same code, parameters and data, and a results table that differs
+  only by computing noise (same genes and directions of change, values within a relative tolerance, 0.001 by
+  default, `--tolerance`). DESeq2 is not identical bit for bit across systems; this verdict names the
+  difference instead of reporting the analysis as not reproduced.
+- Computing platform recorded with each analysis, outside the fingerprint (`platform.json`: system, R,
+  linear algebra library, OmicChain image), and shown by the verification.
+- OmicChain image: linear algebra on a single thread, so that every run gives the same bytes.
 - Reference container image (`Dockerfile`, `docker-compose.yml`, `DOCKER.md`), built, tested and published by
   GitHub Actions. The build fails if the R environment of the image differs from `renv.lock`.
 - `renv.lock` at the root of the repository is now the complete environment (154 packages, R 4.5.1,
@@ -10,6 +17,10 @@
 - Tests with the real R packages: environment record, whole pipeline with DESeq2, verification (`tests/run_all.py real`).
 
 **Fixed**
+- Line endings: every file that OmicChain writes, and that may be certified (parameters, input data record,
+  data origin, results table, upstream counts), is now written with Unix line endings on every system. On
+  Windows they were written with Windows line endings, so that an analysis certified on Windows could not
+  give the same fingerprint when re-run on Linux or in the container. New test `test_line_endings`.
 - R environment component: the record certified with each analysis (`renv.lock`) now lists the R version,
   the Bioconductor release and every package the analysis depends on, with its version, wherever R loads
   it from. Before, `renv::snapshot` only saw the project's private library, so on a computer where the

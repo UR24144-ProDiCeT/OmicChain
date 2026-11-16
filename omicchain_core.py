@@ -259,7 +259,7 @@ def certify(manifest_path, results_dir, base_dir=".", stage=True, write_crate=Tr
     }
     bm_path = results_abs / "bundle_manifest.json"
     _write_json(bm_path, bundle_manifest)
-    (results_abs / "bundle_hash.txt").write_text(bundle_hash)
+    (results_abs / "bundle_hash.txt").write_text(bundle_hash, newline="\n")
 
     if write_crate:
         for fname, label in (
@@ -794,5 +794,5 @@ def write_data_origin(origin_path, expression_path, dest_path) -> dict:
             "Data & reference tab.")
     origin["certified_link"] = {"expression_input_sha256": actual, "matches_data_origin": True}
     Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(dest_path).write_text(json.dumps(origin, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    Path(dest_path).write_text(json.dumps(origin, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     return origin

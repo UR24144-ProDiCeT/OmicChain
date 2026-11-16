@@ -76,8 +76,13 @@ check("3. wrong data -> stop reported, no re-run", any("not the one used" in e.v
       and not any("Re-run" in d.value.columns for d in at.dataframe), texts(at.error))
 
 os.environ["MOCK_NOISE"] = "1e-9"; at = run_case(); os.environ.pop("MOCK_NOISE")
-check("4. numeric difference -> NOT REPRODUCED + figures shown", any("NOT REPRODUCED" in e.value for e in at.error)
-      and any("information only" in i.value and "log2FoldChange" in i.value for i in at.info), texts(at.error) + texts(at.info))
+check("4. computing noise (another system) -> RESULTS EQUIVALENT, platforms shown",
+      any("RESULTS EQUIVALENT" in w.value for w in at.warning) and any("Certified on: Mock OS" in c.value for c in at.caption),
+      texts(at.warning) + texts(at.caption))
+os.environ["MOCK_NOISE"] = "0.5"; at = run_case(); os.environ.pop("MOCK_NOISE")
+check("4b. real numeric difference -> NOT REPRODUCED + figures shown", any("NOT REPRODUCED" in e.value for e in at.error)
+      and any("information only" in i.value and "log2FoldChange" in i.value for i in at.info)
+      and any("Not equivalent" in i.value for i in at.info), texts(at.error) + texts(at.info))
 check("4. ... component 'Top DE genes table' marked DIFFERENT", "DIFFERENT" in list(at.dataframe[-1].value["Re-run"]))
 check("5. the original results of the project were not modified", (R / "bundle_hash.txt").read_text() == BUNDLE)
 check("6. known code: mention without blocking, no network warning", any("Code of the crate" in c.value for c in at.caption)

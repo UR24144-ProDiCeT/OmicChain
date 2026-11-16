@@ -13,7 +13,7 @@ PROOF_KEYS = ("tx_hash", "network_used", "proof_timestamp", "proof_block", "proo
 def save_proof(results_dir, state):
     """Write the blockchain proof next to the published results."""
     proof = {k: state.get(k) for k in PROOF_KEYS}
-    Path(results_dir, PROOF_FILE).write_text(json.dumps(proof, indent=2, default=str) + "\n", encoding="utf-8")
+    Path(results_dir, PROOF_FILE).write_text(json.dumps(proof, indent=2, default=str) + "\n", encoding="utf-8", newline="\n")
 
 
 def _proof_from_crate(folder):

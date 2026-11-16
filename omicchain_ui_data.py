@@ -209,7 +209,7 @@ def load_counts_into_pipeline(out, project_dir):
         (project_dir / "data_origin.json").unlink(missing_ok=True)
     (project_dir / LOADED_FILE).write_text(json.dumps(
         {"label": label, "counts_dir": str(out), "samples": len(src),
-         "provenance_file": prov.name if prov else None}, indent=2), encoding="utf-8")
+         "provenance_file": prov.name if prov else None}, indent=2), encoding="utf-8", newline="\n")
     st.session_state["study_counts_dir"] = str(out)
     st.session_state["ctrl_samples"] = src.loc[src["group"] == "control", "sample"].tolist()
     st.session_state["trt_samples"] = src.loc[src["group"] == "treatment", "sample"].tolist()

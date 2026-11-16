@@ -55,15 +55,38 @@ check("5. ... verdict RESULTS REPRODUCED (code 2), data component involved", rep
       and rep["different"] == ["Input data (expression + metadata)"], rep.get("different"))
 
 os.environ["MOCK_DESEQ2_VERSION"] = "1.51.0"; rep = verify(); os.environ.pop("MOCK_DESEQ2_VERSION")
-check("6. autre version de DESeq2 -> RESULTS REPRODUCED", rep["verdict"] == "RESULTS REPRODUCED" and rep["different"] == ["R environment (renv.lock)"], rep.get("different"))
+check("6. other DESeq2 version -> RESULTS REPRODUCED", rep["verdict"] == "RESULTS REPRODUCED" and rep["different"] == ["R environment (renv.lock)"], rep.get("different"))
 check("6. ... the version change is named", "DESeq2 1.50.2 -> 1.51.0" in rep.get("environment_changes", []), rep.get("environment_changes"))
 
 os.environ["MOCK_NOISE"] = "1e-9"; rep = verify(); os.environ.pop("MOCK_NOISE")
 cmp = rep.get("table_comparison", {}).get("Top DE genes table", {})
-check("7. petite difference numerique -> NOT REPRODUCED (code 1)", rep["verdict"] == "NOT REPRODUCED" and rep["exit_code"] == 1, rep["verdict"])
+check("7. tiny numeric difference (another system) -> RESULTS EQUIVALENT (code 3)", rep["verdict"] == "RESULTS EQUIVALENT"
+      and rep["exit_code"] == 3 and rep["different"] == ["Top DE genes table"] and rep["equivalence"]["reasons"] == [], rep)
 check("7. ... numeric difference: ~1e-9 on log2FoldChange, same genes", 5e-10 < cmp["max_differences"]["log2FoldChange"]["max_abs"] < 5e-9
       and cmp["n_only_certified"] == 0 and cmp["n_only_rerun"] == 0, cmp)
 check("7. ... the re-run folder is kept for inspection", Path(rep["workdir"]).exists())
+check("7. ... platforms of the certification and of the re-run reported (outside the fingerprint)",
+      rep["platforms"]["certified"]["os"] == "Mock OS" and rep["platforms"]["rerun"]["r"].startswith("R version")
+      and not any("platform" in c["label"].lower() for c in rep["components"]), rep.get("platforms"))
+os.environ["MOCK_NOISE"] = "1e-9"; rep = verify(tolerance=1e-12); os.environ.pop("MOCK_NOISE")
+check("7b. same difference with a stricter tolerance -> NOT REPRODUCED, value named",
+      rep["verdict"] == "NOT REPRODUCED" and any("log2FoldChange" in r for r in rep["equivalence"]["reasons"]), rep.get("equivalence"))
+os.environ["MOCK_NOISE"] = "0.5"; rep = verify(); os.environ.pop("MOCK_NOISE")
+check("7c. real difference (3.5 -> 4.0) -> NOT REPRODUCED", rep["verdict"] == "NOT REPRODUCED" and rep["exit_code"] == 1
+      and any("log2FoldChange" in r and "more than 0.001" in r for r in rep["equivalence"]["reasons"]), rep.get("equivalence"))
+os.environ["MOCK_NOISE"] = "-7.0"; rep = verify(); os.environ.pop("MOCK_NOISE")
+check("7d. direction of change reversed -> NOT REPRODUCED, reason given", rep["verdict"] == "NOT REPRODUCED"
+      and any("direction of change" in r for r in rep["equivalence"]["reasons"]), rep.get("equivalence"))
+eqd = Path(tempfile.mkdtemp())
+(eqd / "a.tsv").write_text("Gene\tlog2FoldChange\tpadj\nTP53\t3.5\t1e-26\nMYC\t-2.25\t0.002\n")
+(eqd / "b.tsv").write_text("Gene\tlog2FoldChange\tpadj\nTP53\t3.50001\t1.0002e-26\nMYC\t-2.25\t0.002\n")
+(eqd / "c.tsv").write_text("Gene\tlog2FoldChange\tpadj\nTP53\t3.5\t1e-26\nMYCN\t-2.25\t0.002\n")
+(eqd / "d.tsv").write_text("Gene\tlog2FoldChange\tpadj\nTP53\t3.5\t1e-26\n")
+check("7e. tiny p-values 2e-4 apart (relative) and log2FC 3e-6 apart: equivalent", ov._equivalence(eqd / "a.tsv", eqd / "b.tsv") == [])
+check("7e. ... another gene: not equivalent", any("absent" in r for r in ov._equivalence(eqd / "a.tsv", eqd / "c.tsv")))
+(eqd / "e.tsv").write_text("Gene\tlog2FoldChange\tpadj\nMYC\t-2.25\t0.002\nTP53\t3.50001\t1.0002e-26\n")
+check("7e. ... same genes listed in another order: equivalent", ov._equivalence(eqd / "a.tsv", eqd / "e.tsv") == [])
+check("7e. ... a gene missing: not equivalent", any("rows" in r for r in ov._equivalence(eqd / "a.tsv", eqd / "d.tsv")))
 
 ext = REV / "extrait"; zipfile.ZipFile(REV / "crate.zip").extractall(ext)
 (ext / "top_genes.tsv").write_text((ext / "top_genes.tsv").read_text().replace("3.5", "9.9"))
@@ -141,7 +164,7 @@ cli = subprocess.run([sys.executable, str(PROJ / "omicchain_verify.py"), str(REV
                       "--metadata", str(META), "--expected", BUNDLE, "--project", str(PROJ)], capture_output=True, text=True)
 check("14. command line: VERDICT REPRODUCED, code 0", cli.returncode == 0 and "VERDICT : REPRODUCED" in cli.stdout, cli.stdout[-600:] + cli.stderr[-600:])
 check("16. crate code recognised (official) -> step 'code of the crate' OK, nothing asked",
-      any(st["name"] == "code of the crate" and st["ok"] and "official OmicChain 1.0.0-rc1" in st["detail"] for st in verify()["steps"]))
+      any(st["name"] == "code of the crate" and st["ok"] and "official OmicChain 1.0.0-rc2" in st["detail"] for st in verify()["steps"]))
 cc = ov.crate_code_check(REV / "crate.zip", PROJ)
 check("16. crate_code_check (zip): known, 3 files", cc and cc["known"] and len(cc["files"]) == 3, cc)
 snake_ok = (PROJ / "Snakefile").read_text()
@@ -171,6 +194,6 @@ cc = ov.crate_code_check(alien, PROJ)
 check("19. version recorded in official_code.json -> recognised ('official OmicChain 0.8')", cli.returncode == 0 and cc["known"]
       and any(f["origin"] == "official OmicChain 0.8" for f in cc["files"]), (cli.stdout + cli.stderr, cc))
 reg = json.loads((PROJ / "official_code.json").read_text())
-check("19. ... the registry keeps the other versions", [r["version"] for r in reg["releases"]] == ["0.9", "1.0.0-rc1", "0.8"], reg)
+check("19. ... the registry keeps the other versions", [r["version"] for r in reg["releases"]] == ["0.9", "1.0.0-rc1", "1.0.0-rc2", "0.8"], reg)
 print("\n" + (f"{len(FAILED)} CHECK(S) FAILED: {FAILED}" if FAILED else "ALL CHECKS PASS"))
 sys.exit(1 if FAILED else 0)

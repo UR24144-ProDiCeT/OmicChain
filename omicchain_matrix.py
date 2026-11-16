@@ -90,7 +90,7 @@ def import_matrix(data, filename, studies_root, name=None):
                                "genes": int(out.shape[0]), "samples": int(out.shape[1]),
                                "rounded_values": any("not integers" in w for w in warnings)},
                 "warnings": warnings, "files": []}
-    (d / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    (d / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
     return d, warnings
 
 
@@ -139,5 +139,5 @@ def comparison_files(study, table, condition, ref_level, test_level, samples, ou
                        "candidate_covariates": covariates},
             "outputs": {n: _sha(out_dir / n) for n in ("expression_input.tsv", "metadata.tsv")}}
     (out_dir / "matrix_provenance.json").write_text(json.dumps(prov, indent=2, ensure_ascii=False) + "\n",
-                                                    encoding="utf-8")
+                                                    encoding="utf-8", newline="\n")
     return prov

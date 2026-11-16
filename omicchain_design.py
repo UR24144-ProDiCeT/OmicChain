@@ -160,7 +160,7 @@ def save_annotations(study, table, info):
     for c in info["user_columns"]:
         out[c] = out[c].astype(str).map(clean_value)
     out.to_csv(study / ANNOTATED_TABLE, sep="\t", index=False, lineterminator="\n")
-    (study / ANNOTATIONS_JSON).write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (study / ANNOTATIONS_JSON).write_text(json.dumps(info, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
 
 def apply_rule(table, source, contains, column, value):

@@ -41,6 +41,7 @@ rule all:
         f"{RESULTS_DIR}/analysis_parameters.txt",
         f"{RESULTS_DIR}/data_provenance.txt",
         f"{RESULTS_DIR}/renv.lock",
+        f"{RESULTS_DIR}/platform.json",
         f"{RESULTS_DIR}/bundle_manifest.json",
         f"{RESULTS_DIR}/bundle_hash.txt",
         f"{RESULTS_DIR}/ro-crate-metadata.json",
@@ -173,7 +174,7 @@ rule write_parameters:
             elif group == "treatment":
                 treatment_samples.append(sample)
 
-        with open(output[0], "w") as out:
+        with open(output[0], "w", newline="\n") as out:
             out.write(f"padj_threshold={params.padj}\n")
             out.write(f"lfc_threshold={params.lfc}\n")
             out.write(f"control_samples={','.join(control_samples)}\n")
@@ -203,11 +204,20 @@ rule hash_input_data:
             ).encode("utf-8")
             return hashlib.sha256(canonical).hexdigest()
 
-        with open(output[0], "w") as out:
+        with open(output[0], "w", newline="\n") as out:
             out.write(f"expression_raw_sha256={raw_sha256(input.expr)}\n")
             out.write(f"expression_canonical_sha256={canonical_sha256(input.expr)}\n")
             out.write(f"metadata_raw_sha256={raw_sha256(input.meta)}\n")
             out.write(f"metadata_canonical_sha256={canonical_sha256(input.meta)}\n")
+
+
+rule record_platform:
+    input:
+        f"{RESULTS_DIR}/top_genes.tsv"
+    output:
+        f"{RESULTS_DIR}/platform.json"
+    shell:
+        "Rscript platform_info.R {output}"
 
 
 rule snapshot_renv:
@@ -321,7 +331,7 @@ rule exploration_robustness:
 
         robustness.to_csv(output.table, sep="\t", index=False)
         hits.to_csv(output.hits, sep="\t", index=False)
-        with open(output.manifest, "w") as f:
+        with open(output.manifest, "w", newline="\n") as f:
             f.write(f"padj_grid={','.join(str(p) for p in PADJ_GRID)}\n")
             f.write(f"lfc_grid={','.join(str(l) for l in LFC_GRID)}\n")
             f.write(f"n_combinations={n_combos}\n")

@@ -28,7 +28,7 @@ def data_signature(project_dir, covariate):
 def save_signature(exploration_dir, signature, covariate):
     Path(exploration_dir).mkdir(parents=True, exist_ok=True)
     (Path(exploration_dir) / "signature.json").write_text(
-        json.dumps({"signature": signature, "covariate": covariate or ""}), encoding="utf-8")
+        json.dumps({"signature": signature, "covariate": covariate or ""}), encoding="utf-8", newline="\n")
 
 
 def stored_signature(exploration_dir):

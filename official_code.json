@@ -16,6 +16,14 @@
         "run_deseq2.R": "28a3638f9e34575693f21d740420b942a40de76c2f925c703ee1ba092132da54",
         "de_core.R": "6b0a67e354d8b20b59d82149d9c12c53c69145a745d5367a455722bd5376730d"
       }
+    },
+    {
+      "version": "1.0.0-rc2",
+      "files": {
+        "Snakefile": "2e7a95c53d90dc1c688813fef85e6cdac3e71165e6f4272cd89a87432a91eba7",
+        "run_deseq2.R": "fa0414d83773fc7e04599e3f64a7e2d426cdb2de9c08c751ce09816b385dace1",
+        "de_core.R": "6b0a67e354d8b20b59d82149d9c12c53c69145a745d5367a455722bd5376730d"
+      }
     }
   ]
 }

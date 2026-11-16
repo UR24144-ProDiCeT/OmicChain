@@ -10,7 +10,7 @@ import subprocess, sys, time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-PORTABLE = ["test_inputs", "test_chain_publish", "test_fetch", "test_jobs"]
+PORTABLE = ["test_inputs", "test_chain_publish", "test_fetch", "test_jobs", "test_line_endings"]
 FAST = PORTABLE + ["test_covariate", "test_verify", "test_data_origin", "test_identity_integration", "test_qc_history",
                    "test_app_publish", "test_app_design", "test_app_explore", "test_app_matrix", "test_app_orcid",
                    "test_app_rerun", "test_app_rerun_raw"]

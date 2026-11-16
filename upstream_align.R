@@ -30,4 +30,6 @@ stats <- c(rsubread_version = as.character(packageVersion("Rsubread")),
            mapped = aln[paste0("Mapped_", key), 1],
            uniquely_mapped = if (paste0("Uniquely_mapped_", key) %in% rownames(aln))
              aln[paste0("Uniquely_mapped_", key), 1] else NA)
-writeLines(paste(names(stats), stats, sep = "\t"), stats_out)
+con <- file(stats_out, "wb")
+writeLines(paste(names(stats), stats, sep = "\t"), con, sep = "\n")
+close(con)
