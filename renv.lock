@@ -47,6 +47,11 @@
       "Version": "1.44.0",
       "Source": "Bioconductor"
     },
+    "BiocVersion": {
+      "Package": "BiocVersion",
+      "Version": "3.22.0",
+      "Source": "Bioconductor"
+    },
     "Biostrings": {
       "Package": "Biostrings",
       "Version": "2.78.0",

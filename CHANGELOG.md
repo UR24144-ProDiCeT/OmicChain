@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-rc3 — 2026-11
+
+**Fixed**
+- R environment record: `BiocVersion` is now one of the packages of the analysis (`DESCRIPTION`, `renv.lock`).
+  The Bioconductor release is read from it; an installation made with `renv::restore()` did not install it,
+  so its record lacked the Bioconductor release and differed from the record of the same packages
+  installed otherwise (BiocManager, container image).
+
 ## 1.0.0-rc2 — 2026-11
 
 **Added**

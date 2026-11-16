@@ -1,14 +1,12 @@
 Package: OmicChainPipeline
 Type: Project
 Title: OmicChain DESeq2 analysis pipeline dependencies
-Description: Not a real R package to install -- this file exists only so
-    that renv can track the exact packages this pipeline depends on (see
-    run_deseq2.R), including packages loaded dynamically in a loop
-    (require(pkg, character.only = TRUE)), which renv's automatic
-    dependency scanner cannot detect on its own. Used with
-    renv::snapshot(type = "explicit"). Rsubread aligns and counts the
-    FASTQ files (step "Data & reference"): it is part of the certified
-    R environment too.
+Description: Not a real R package to install: this file lists the packages the
+    analysis depends on. snapshot_renv.R records them, with their dependencies
+    and versions, in renv.lock (the certified R environment). Rsubread aligns and
+    counts the FASTQ files. BiocVersion records the Bioconductor release, so that
+    every installation (renv::restore, BiocManager, the container image) gives
+    the same record.
 Imports:
     DESeq2,
     tibble,
@@ -25,4 +23,5 @@ Imports:
     Biobase,
     apeglm,
     ggrepel,
-    Rsubread
+    Rsubread,
+    BiocVersion
