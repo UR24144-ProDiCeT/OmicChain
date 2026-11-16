@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0-rc2 — 2026-11
 
 **Added**
 - Verdict `RESULTS EQUIVALENT` (exit code 3): same code, parameters and data, and a results table that differs
