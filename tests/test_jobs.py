@@ -17,12 +17,14 @@ def wait(job_id, timeout=60):
     return oj.status(ROOT, job_id)
 PY = sys.executable
 
-script = "import time\nfor i in range(1, 5):\n    print(f'{i} of 4 steps ({i*25}%) done', flush=True); time.sleep(0.4)\n"
+script = "import time\nfor i in range(1, 5):\n    print(f'{i} of 4 steps ({i*25}%) done', flush=True); time.sleep(1.5)\n"
 j = oj.start(ROOT, [PY, "-c", script], label="Test OK", key="k1", cwd=ROOT.parent)
-time.sleep(0.9)
 s = oj.status(ROOT, j)
 check("1. running right after the start", s["status"] == "running", s)
-p = oj.progress(ROOT, j)
+p, t0 = None, time.time()
+while p is None and time.time() - t0 < 30 and oj.status(ROOT, j)["status"] == "running":
+    p = oj.progress(ROOT, j)
+    time.sleep(0.1)
 check("1. progress read from the log (Snakemake)", p is not None and 0 < p < 1, p)
 check("1. same key while it runs -> same task", oj.start(ROOT, [PY, "-c", "pass"], label="x", key="k1") == j)
 s = wait(j)
