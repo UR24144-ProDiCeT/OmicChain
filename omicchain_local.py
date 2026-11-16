@@ -141,7 +141,7 @@ def register(folder, study, name=None, log=print):
                 "date": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "provenance": {"input": name, "source": "user-provided FASTQ files", "folder": str(folder)},
                 "warnings": found["problems"], "files": files}
-    (study / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    (study / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
     log(f"Done: local study '{name}' in {study}")
     return manifest
 

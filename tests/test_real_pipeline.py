@@ -68,6 +68,13 @@ root_lock = ROOT / "renv.lock"
 if os.environ.get("OMICCHAIN_CONTAINER") and root_lock.is_file():
     check("2. in the image: the certified environment is, byte for byte, renv.lock of the repository",
           (res / "renv.lock").read_bytes() == root_lock.read_bytes())
+plat = json.loads((res / "platform.json").read_text())
+check("2. computing platform recorded next to the results (system, R, BLAS), outside the fingerprint",
+      plat.get("os") and plat.get("r", "").startswith("R version") and "blas" in plat
+      and "platform.json" not in (res / "bundle_manifest.json").read_text().split('"components"')[1].split("]")[0], plat)
+if os.environ.get("OMICCHAIN_CONTAINER"):
+    check("2. in the image: recorded as the OmicChain image, single-threaded BLAS",
+          plat.get("container") is True and plat.get("blas_threads") == "1", plat)
 bundle = (res / "bundle_hash.txt").read_text().strip()
 check("3. composite fingerprint computed", len(bundle) == 64)
 

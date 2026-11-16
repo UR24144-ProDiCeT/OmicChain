@@ -227,7 +227,7 @@ def build_study(origin, metadata, runs, study):
                           "md5_source": r["md5_source"], "md5_verified": True})
     manifest = {"tool": "omicchain_replay", "provenance": {"input": (origin.get("study") or {}).get("accession", "")},
                 "files": files}
-    (study / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    (study / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
     return complete
 
 
@@ -284,7 +284,7 @@ def run_upstream(origin, study, ref_dir, project, cores=None, log=print):
     log(f"Aligning and counting again ({len(design['samples'])} samples, {cores} cores, "
         f"{align_threads} threads per alignment, strand {strand})...")
     log_path = Path(study) / "upstream_replay.log"
-    with open(log_path, "w", encoding="utf-8", errors="replace") as fh:
+    with open(log_path, "w", encoding="utf-8", errors="replace", newline="\n") as fh:
         proc = subprocess.Popen(smk + ["-j", str(cores), "--resources", f"mem_gb={mem}", "--rerun-incomplete", *config],
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace")
         for line in proc.stdout:

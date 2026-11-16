@@ -20,11 +20,23 @@ from its RO-Crate and compares the new fingerprint with the certified one.
 |---|---|---|
 | `REPRODUCED` | identical fingerprint, bit for bit | 0 |
 | `RESULTS REPRODUCED` | same results table; another component differs (R environment, bytes of the input files) and is named | 2 |
+| `RESULTS EQUIVALENT` | same code, parameters and data; the results table differs only by computing noise: same genes in the same order, same direction of change, every value within the tolerance (default 0.001, relative) | 3 |
 | `NOT REPRODUCED` | the results differ, or a check failed | 1 |
 
 When the results table differs, a numerical comparison is printed (genes present in only one
-table, largest absolute and relative differences per column). It is **information only**: it never
-turns a different fingerprint into a pass.
+table, largest absolute and relative differences per column).
+
+`RESULTS EQUIVALENT` exists because DESeq2 does not give results identical bit for bit on every
+system: another operating system or linear algebra library changes the last digits of some values,
+and the extreme p-values (around 1e-30) amplify such differences. The verdict is given only when
+everything except the R environment and the results is identical, and only within the tolerance
+(`--tolerance`). The fingerprint is still not reproduced, and the report says so. For an identical
+fingerprint, verify in the environment of the certification: on the same system with the same
+package versions, or in the OmicChain image for an analysis certified in it (see `DOCKER.md`).
+
+Each analysis also records, next to its results and outside the fingerprint, the computing platform
+(`platform.json`: operating system, R, linear algebra library, OmicChain image). The verification
+prints the platform of the certification and that of the re-run.
 
 ## Use
 

@@ -488,7 +488,7 @@ def _cmd_link(args) -> int:
                            issuer=flow["issuer"], audience=client_id)
     except IdentityError as exc:
         raise SystemExit(f"Error: {exc}")
-    Path(args.out).write_text(json.dumps(link, indent=2) + "\n", encoding="utf-8")
+    Path(args.out).write_text(json.dumps(link, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(f"ORCID iD {link['orcid']} linked to {address}.\nWrote {args.out}")
     if orcid_env == "sandbox":
         print("Note: this is a SANDBOX identity; it proves nothing about a real ORCID account.")

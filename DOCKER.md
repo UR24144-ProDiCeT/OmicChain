@@ -99,7 +99,8 @@ docker compose run --rm omicchain test fast     # application tests
   the image; your own files are never removed.
 - **Linux.** Files are created by the user of the container (root by default). To create them as
   yourself, add `user: "1000:1000"` (your `id -u`:`id -g`) under `omicchain:` in `docker-compose.yml`.
-- **Same fingerprint outside the container.** The R environment record lists R, Bioconductor and
-  package versions only. A computer with the same versions therefore produces the same record; if
-  the results table is also identical, the fingerprint is identical. If a version differs, Verify
-  reports `RESULTS REPRODUCED` and names the packages that differ.
+- **Identical fingerprint.** An analysis certified in the image is reproduced bit for bit by anyone
+  running the same image. An analysis certified on another system (for instance natively on
+  Windows) and verified in the image gives `RESULTS EQUIVALENT` when the only differences are
+  computing noise: DESeq2 is not identical bit for bit across operating systems and linear algebra
+  libraries. See `VERIFY.md`.

@@ -308,6 +308,13 @@ def render_report(rr):
         for col, d in cmp.get("max_differences", {}).items():
             lines.append(f"{col}: max absolute difference {d['max_abs']:.3g}, max relative {d['max_rel']:.3g}")
         st.info("\n\n".join(lines) + "\n\n(information only: the fingerprint is not reproduced)")
+    plat = rr.get("platforms") or {}
+    if plat:
+        st.caption(f"Certified on: {ov.describe_platform(plat.get('certified'))}  \n"
+                   f"Re-run on: {ov.describe_platform(plat.get('rerun'))}")
+    eq = rr.get("equivalence")
+    if eq and eq.get("reasons"):
+        st.info(f"Not equivalent within {eq['tolerance']:g} (relative):\n\n" + "\n\n".join(eq["reasons"]))
     raw_scope = rr.get("scope") == "raw"
     if rr["verdict"] == "REPRODUCED":
         st.success("✅ REPRODUCED " + ("FROM THE RAW DATA — the raw files have the certified checksums, and the "
@@ -316,6 +323,12 @@ def render_report(rr):
     elif rr["verdict"] == "RESULTS REPRODUCED":
         st.warning("⚠️ RESULTS REPRODUCED" + (" from the raw data" if raw_scope else "") + " — identical results "
                    "table, but the fingerprint differs because of: " + ", ".join(rr.get("different", [])))
+    elif rr["verdict"] == "RESULTS EQUIVALENT":
+        st.warning("≈ RESULTS EQUIVALENT" + (" from the raw data" if raw_scope else "") + " — same code, parameters and "
+                   "data; same genes and directions of change, every value within "
+                   f"{(eq or {}).get('tolerance', ov.TOLERANCE):g} (relative) of the certified one. The fingerprint "
+                   "differs because the computation is not identical bit for bit on this system (for instance another "
+                   "operating system or linear algebra library): " + ", ".join(rr.get("different", [])))
     else:
         st.error(f"❌ {rr['verdict']}")
     if rr.get("log_tail"):

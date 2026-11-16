@@ -101,7 +101,7 @@ def write_config(workdir, cfg):
     workdir = Path(workdir)
     workdir.mkdir(parents=True, exist_ok=True)
     path = workdir / CONFIG_FILE
-    path.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(cfg, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     return ["--configfile", str(path)]
 
 
@@ -208,7 +208,7 @@ def verify_reference(plan, out):
               "gtf_sha256": man["sources"]["gtf"]["sha256"], "index_type": plan["index_type"],
               "index_fingerprint": fingerprint, "index_rsubread_version": entry.get("rsubread_version"),
               "index_origin": entry["origin"]["method"]}
-    Path(out).write_text(json.dumps(result, indent=2), encoding="utf-8")
+    Path(out).write_text(json.dumps(result, indent=2), encoding="utf-8", newline="\n")
 
 
 FIXED_SAMPLE_COLUMNS = {"sample", "title", "source_name", "organism", "library_layout",
@@ -370,7 +370,7 @@ def merge(plan, counts_dir, align_dir, strand_file, reference_check, outdir, rsu
         "warnings": warnings,
     }
     (outdir / "upstream_provenance.json").write_text(json.dumps(provenance, indent=2, ensure_ascii=False) + "\n",
-                                                     encoding="utf-8")
+                                                     encoding="utf-8", newline="\n")
     return provenance
 
 

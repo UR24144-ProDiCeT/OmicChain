@@ -425,7 +425,7 @@ def main(argv=None):
     }
 
     def save_manifest():
-        (out / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+        (out / "fetch_manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
 
     if a.dry_run:
         say(f"\n  --dry-run: {len(files)} file(s), {human(total)} to download for {len(chosen)} sample(s).")

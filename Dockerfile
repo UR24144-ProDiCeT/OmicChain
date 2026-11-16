@@ -51,11 +51,15 @@ LABEL org.opencontainers.image.title="OmicChain" \
       org.opencontainers.image.version="${OMICCHAIN_VERSION}" \
       org.opencontainers.image.revision="${VCS_REF}"
 
+# One computing thread for the linear algebra library: the order of the additions, hence every
+# result, is then the same on every run and every computer.
 # /work: the project folder of the user (analyses, results, .env). /refs: reference genomes and indexes.
 ENV OMICCHAIN_CONTAINER=1 \
     OMICCHAIN_IMAGE_VERSION=${OMICCHAIN_VERSION} \
     OMICCHAIN_IMAGE_REVISION=${VCS_REF} \
     OMICCHAIN_REF_DIR=/refs \
+    OPENBLAS_NUM_THREADS=1 \
+    OMP_NUM_THREADS=1 \
     HOME=/home/omicchain \
     XDG_CACHE_HOME=/home/omicchain/.cache
 RUN mkdir -p /work /refs /home/omicchain/.cache && chmod -R 1777 /work /refs /home/omicchain

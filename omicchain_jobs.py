@@ -24,7 +24,7 @@ def _now():
 
 def _write_json(path, data):
     tmp = Path(str(path) + ".tmp")
-    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
     os.replace(tmp, path)
 
 
@@ -49,7 +49,7 @@ def start(root, command, *, label, key=None, cwd=None, env=None):
     info = {"id": job_id, "label": label, "key": key, "command": [str(c) for c in command],
             "cwd": str(Path(cwd or os.getcwd()).resolve()), "created": _now(), "created_ts": time.time()}
     _write_json(d / "job.json", info)
-    (d / "heartbeat").write_text(str(time.time()))
+    (d / "heartbeat").write_text(str(time.time()), newline="\n")
     wrapper = [sys.executable, str(Path(__file__).resolve()), "_run", str(d.resolve())]
     kwargs = dict(stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                   cwd=info["cwd"], env=env, close_fds=True)
@@ -167,7 +167,7 @@ def _run(job_dir):
     def beat():
         while not stop.is_set():
             try:
-                (d / "heartbeat").write_text(str(time.time()))
+                (d / "heartbeat").write_text(str(time.time()), newline="\n")
             except OSError:
                 pass
             stop.wait(HEARTBEAT_EVERY)

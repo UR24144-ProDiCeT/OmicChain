@@ -15,6 +15,8 @@ source("de_core.R")
 core <- run_de_core(expression_file, metadata_file, covariate = covariate)
 res_df <- core$res_df[, c("Gene", "log2FoldChange", "padj", "pvalue")]
 
-write.table(res_df, file = output_file, sep = "\t", quote = FALSE, row.names = FALSE)
+con <- file(output_file, "wb")
+write.table(res_df, file = con, sep = "\t", quote = FALSE, row.names = FALSE)
+close(con)
 
 cat(sprintf("run_exploration.R completed: %d genes\n", nrow(res_df)))

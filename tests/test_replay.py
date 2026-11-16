@@ -125,7 +125,7 @@ man_p.write_text(man_txt)
 
 P2 = TMP / "proj2"; shutil.copytree(PROJ, P2, symlinks=True)
 cnt = (P2 / "upstream_count.R").read_text()
-marker = "writeLines(paste(names(m), as.integer(m)"
+marker = "write_lf(paste(names(m), as.integer(m)"
 assert marker in cnt, cnt[-1500:]
 (P2 / "upstream_count.R").write_text(cnt.replace(marker, "m <- m + 1L\n  " + marker, 1))
 rep = ov.rerun_verify(GEO / "crate.zip", project=P2, log=lambda *a: None, ref_dir=CACHE, from_raw=True, fastq_dir=STUDY / "fastq",

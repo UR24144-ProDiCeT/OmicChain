@@ -17,7 +17,9 @@ import omicchain_names as onm
 __all__ = ["rerun_verify", "input_hashes", "crate_origin", "crate_code_check"]
 
 HERE = Path(__file__).resolve().parent
-TOOLING = ("omicchain_core.py", "identicon_utils.py", "snapshot_renv.R")
+TOOLING = ("omicchain_core.py", "identicon_utils.py", "snapshot_renv.R", "platform_info.R")
+TOLERANCE = 1e-3
+SHARED_ROLES = ("environment", "output", "platform")
 INPUT_NAMES = {"expression": "expression_input.tsv", "metadata": "metadata.tsv"}
 
 
@@ -231,7 +233,7 @@ def register_official_code(version: str, project=HERE) -> dict:
                                                                               "releases": []}
     registry["releases"] = [r for r in registry["releases"] if r["version"] != version] + [
         {"version": version, "files": files}]
-    p.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    p.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8", newline="\n")
     return files
 
 
@@ -261,7 +263,7 @@ def _prepare_workdir(crate: Path, workdir: Path, project: Path, files: dict, bun
             for c in bundle["components"]
         ],
     }
-    (workdir / "omicchain.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (workdir / "omicchain.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8", newline="\n")
 
     for name in TOOLING:
         src = project / name
@@ -289,9 +291,9 @@ def _prepare_workdir(crate: Path, workdir: Path, project: Path, files: dict, bun
         "  on.exit(setwd(owd))\n"
         '  source("renv/activate.R")\n'
         "})\n",
-        encoding="utf-8",
+        encoding="utf-8", newline="\n",
     )
-    (workdir / ".Rprofile").write_text('source("renv/activate.R")\n', encoding="utf-8")
+    (workdir / ".Rprofile").write_text('source("renv/activate.R")\n', encoding="utf-8", newline="\n")
 
 
 def _snakemake_command() -> list:
@@ -342,6 +344,69 @@ def _compare_tables(a: Path, b: Path) -> dict:
     return out
 
 
+def _equivalence(a: Path, b: Path, tolerance: float = TOLERANCE) -> list:
+    """Reasons why two results tables are not numerically equivalent (empty list: equivalent).
+    Equivalent: same columns, same genes (genes with nearly equal p-values may be listed in another
+    order), same text values, same direction of change, and every number within `tolerance` of the
+    certified one (relative difference)."""
+    import numpy as np
+    import pandas as pd
+
+    ta, tb = pd.read_csv(a, sep="\t"), pd.read_csv(b, sep="\t")
+    if list(ta.columns) != list(tb.columns):
+        return ["the tables do not have the same columns"]
+    if len(ta) != len(tb):
+        return [f"{len(ta)} rows certified, {len(tb)} rows re-run"]
+    key = ta.columns[0]
+    if ta[key].is_unique and tb[key].is_unique:
+        if set(ta[key]) != set(tb[key]):
+            return [f"{key}: {len(set(ta[key]) - set(tb[key]))} certified gene(s) absent from the re-run"]
+        tb = tb.set_index(key).loc[ta[key]].reset_index()
+    out = []
+    for col in ta.columns:
+        x, y = ta[col], tb[col]
+        xn, yn = pd.to_numeric(x, errors="coerce"), pd.to_numeric(y, errors="coerce")
+        numeric = xn.notna().sum() == x.notna().sum() and x.notna().any()
+        if not numeric:
+            if not x.fillna("").astype(str).equals(y.fillna("").astype(str)):
+                out.append(f"{col}: different values")
+            continue
+        if not (xn.isna() == yn.isna()).all():
+            out.append(f"{col}: missing values at different places")
+            continue
+        both = xn.notna()
+        u, v = xn[both].to_numpy(float), yn[both].to_numpy(float)
+        if col.lower().startswith("log2foldchange") and (np.sign(u) != np.sign(v)).any():
+            out.append(f"{col}: direction of change differs for {int((np.sign(u) != np.sign(v)).sum())} gene(s)")
+            continue
+        scale = np.maximum(np.abs(u), np.abs(v))
+        bad = np.abs(u - v) > tolerance * scale
+        if bad.any():
+            rel = float((np.abs(u - v) / np.where(scale > 0, scale, 1)).max())
+            out.append(f"{col}: {int(bad.sum())} value(s) differ by more than {tolerance:g} (relative), up to {rel:.3g}")
+    return out
+
+
+def _read_platform(path: Path):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def describe_platform(info) -> str:
+    """One line: operating system, R, linear algebra library, container image."""
+    if not info:
+        return "not recorded (analysis certified before OmicChain 1.0.0-rc2)"
+    parts = [info.get("os") or info.get("platform") or "unknown system", info.get("r") or ""]
+    blas = Path(str(info.get("blas") or "")).name
+    if blas:
+        parts.append(f"BLAS {blas}")
+    if info.get("container"):
+        parts.append(f"OmicChain image {info.get('image_version') or ''}".strip())
+    return ", ".join(p for p in parts if p)
+
+
 def _compare_locks(a: Path, b: Path) -> list:
     """Package / R versions that differ between two renv.lock files."""
     try:
@@ -366,7 +431,7 @@ def rerun_verify(crate, *, expression=None, metadata=None, expected=None,
                  project=HERE, workdir=None, keep=False, cores=4, log=print,
                  from_raw=False, fastq_dir=None, matrix=None, ref_dir=None,
                  prepare_reference=False, raw_workdir=None, download=True,
-                 trust_crate_code=False) -> dict:
+                 trust_crate_code=False, tolerance=TOLERANCE) -> dict:
     """Run the four steps (five with from_raw). Returns a report dict with
     'verdict', 'exit_code' and 'scope' ('downstream' or 'raw')."""
     project = Path(project).resolve()
@@ -478,7 +543,7 @@ def rerun_verify(crate, *, expression=None, metadata=None, expected=None,
         for c in bundle["components"]:
             if c.get("role") == "environment":
                 env["OMICCHAIN_SNAPSHOT_LIKE"] = str((crate / c["crate_path"]).resolve())
-        with open(workdir / "rerun.log", "w", encoding="utf-8") as logf:
+        with open(workdir / "rerun.log", "w", encoding="utf-8", newline="\n") as logf:
             proc = subprocess.run(
                 _snakemake_command() + ["-j", str(cores), "--config", *config],
                 cwd=workdir, env=env, stdout=logf, stderr=subprocess.STDOUT,
@@ -492,6 +557,8 @@ def rerun_verify(crate, *, expression=None, metadata=None, expected=None,
             return report
         new_dir = _find_results(workdir)
         step("re-run of the pipeline", True)
+        report["platforms"] = {"certified": _read_platform(crate / "platform.json"),
+                               "rerun": _read_platform(new_dir / "platform.json")}
 
         new_bundle = occ.load_bundle_manifest(new_dir)
         report["rerun_bundle"] = new_bundle["bundle_hash"]
@@ -518,6 +585,19 @@ def rerun_verify(crate, *, expression=None, metadata=None, expected=None,
                 if c.get("role") == "output" and c["crate_path"].endswith(".tsv"):
                     report.setdefault("table_comparison", {})[c["label"]] = _compare_tables(
                         crate / c["crate_path"], new_dir / c["crate_path"])
+            if outputs_differ and all(c.get("role") in SHARED_ROLES for c in diff):
+                reasons = []
+                for c in diff:
+                    if c.get("role") != "output":
+                        continue
+                    if not c["crate_path"].endswith(".tsv"):
+                        reasons.append(f"{c['label']}: not a table")
+                        continue
+                    reasons += [f"{c['label']}, {r}" for r in
+                                _equivalence(crate / c["crate_path"], new_dir / c["crate_path"], tolerance)]
+                report["equivalence"] = {"tolerance": tolerance, "reasons": reasons}
+                if not reasons:
+                    report.update(verdict="RESULTS EQUIVALENT", exit_code=3)
         return report
 
     except VerifyError as exc:
@@ -614,10 +694,23 @@ def _print_summary(report: dict) -> None:
         print(f"  expression table: {cmp['genes'][0]} genes certified, {cmp['genes'][1]} rebuilt; "
               f"{cmp.get('genes_with_different_counts', '?')} gene(s) with other counts "
               f"(max difference {cmp.get('max_count_difference', '?')})")
-    scope = " (from the raw data)" if report.get("scope") == "raw" and report["exit_code"] in (0, 2) else ""
+    plat = report.get("platforms") or {}
+    if plat:
+        print(f"  certified on : {describe_platform(plat.get('certified'))}")
+        print(f"  re-run on    : {describe_platform(plat.get('rerun'))}")
+    eq = report.get("equivalence")
+    if eq and eq["reasons"]:
+        print(f"  not equivalent within {eq['tolerance']:g}:")
+        for r in eq["reasons"]:
+            print(f"    {r}")
+    scope = " (from the raw data)" if report.get("scope") == "raw" and report["exit_code"] in (0, 2, 3) else ""
     print(f"\nVERDICT : {report['verdict']}{scope}")
     if report["verdict"] == "RESULTS REPRODUCED":
         print("The results are identical, but the fingerprint differs because of: " + ", ".join(report["different"]))
+    if report["verdict"] == "RESULTS EQUIVALENT":
+        print(f"Same code, parameters and data; same genes, same directions of change, and every value within "
+              f"{eq['tolerance']:g} (relative) of the certified one. The fingerprint differs because the computation "
+              f"is not identical bit for bit on this system: " + ", ".join(report["different"]))
     if report.get("workdir") and not report.get("workdir_removed"):
         print(f"Re-run folder kept: {report['workdir']}")
     if report.get("raw_workdir") and not report.get("raw_workdir_removed"):
@@ -635,6 +728,8 @@ def _main(argv=None) -> int:
     parser.add_argument("--workdir", help="re-run folder (must not exist; default: a temporary folder)")
     parser.add_argument("--keep", action="store_true", help="keep the re-run folder even when reproduced")
     parser.add_argument("--cores", type=int, default=4)
+    parser.add_argument("--tolerance", type=float, default=TOLERANCE,
+                        help=f"relative tolerance of the RESULTS EQUIVALENT verdict (default {TOLERANCE:g})")
     raw = parser.add_argument_group("re-run from the raw data")
     raw.add_argument("--from-raw", action="store_true",
                      help="rebuild the expression table from the certified raw data first (FASTQ or count matrix)")
@@ -661,12 +756,12 @@ def _main(argv=None) -> int:
         parser.error("the crate (folder or .zip) is required")
     report = rerun_verify(args.crate, expression=args.expression, metadata=args.metadata,
                           expected=args.expected, project=args.project, workdir=args.workdir,
-                          keep=args.keep, cores=args.cores, from_raw=args.from_raw, fastq_dir=args.fastq_dir,
+                          keep=args.keep, cores=args.cores, tolerance=args.tolerance, from_raw=args.from_raw, fastq_dir=args.fastq_dir,
                           matrix=args.matrix, ref_dir=args.ref_dir, prepare_reference=args.prepare_reference,
                           raw_workdir=args.raw_workdir, trust_crate_code=args.trust_crate_code)
     _print_summary(report)
     if args.report_json:
-        Path(args.report_json).write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+        Path(args.report_json).write_text(json.dumps(report, indent=2, default=str), encoding="utf-8", newline="\n")
     return report["exit_code"]
 
 

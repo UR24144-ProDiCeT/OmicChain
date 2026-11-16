@@ -11,7 +11,7 @@ for name in ("omicchain_core.py", "omicchain_identity.py", "certificate_utils.py
              "run_deseq2.R", "de_core.R", "run_exploration.R", "snapshot_renv.R", "contract_abi_proof.json",
              "omicchain_verify.py", "omicchain_chain.py", "omicchain_design.py", "omicchain_jobs.py", "omicchain_ui_data.py", "omicchain_reference.py", "omicchain_fetch.py", "build_index.R",
              "upstream.smk", "upstream_align.R", "upstream_count.R", "omicchain_upstream.py", "omicchain_local.py", "omicchain_matrix.py",
-             "omicchain_explore.py", "omicchain_replay.py", "omicchain_ui_verify.py", "omicchain_ui_style.py", "omicchain_names.py", "omicchain_qc.py", "omicchain_history.py", "DESCRIPTION", "official_code.json"):
+             "omicchain_explore.py", "omicchain_replay.py", "omicchain_ui_verify.py", "omicchain_ui_style.py", "omicchain_names.py", "omicchain_qc.py", "omicchain_history.py", "DESCRIPTION", "official_code.json", "platform_info.R"):
     shutil.copy(ROOT / name, dest / name)
 shutil.copy(ROOT / ("Snakefile" if (ROOT / "Snakefile").is_file() else "Snakefile.smk"), dest / "Snakefile")
 shutil.copytree(ROOT / ".streamlit", dest / ".streamlit")
@@ -67,6 +67,10 @@ elif script == "snapshot_renv.R":
                               if x.startswith((" ", "\t")) and x.strip().rstrip(",") not in ("", "DESeq2")] if desc else ["DESeq2"]
     pk = {n: {"Version": deseq2 if n == "DESeq2" else "1.0.0"} for n in sorted(names)}
     json.dump({"R": {"Version": "4.5.1"}, "Packages": pk}, open(out, "w"), indent=2)
+elif script == "platform_info.R":
+    out = args[0]; os.makedirs(os.path.dirname(out), exist_ok=True)
+    json.dump({"os": os.environ.get("MOCK_OS", "Mock OS"), "platform": "x86_64-mock", "r": "R version 4.5.1 (mock)",
+               "blas": "/mock/libblas.so", "container": bool(os.environ.get("OMICCHAIN_CONTAINER"))}, open(out, "w"), indent=2)
 elif script == "run_exploration.R":
     import math
     out = args[2]; os.makedirs(os.path.dirname(out), exist_ok=True)

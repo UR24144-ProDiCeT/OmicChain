@@ -51,7 +51,7 @@ check("9. ORCID unreachable -> 'unconfirmed'", oid.identity_status(LINK, publish
 
 proj = tmp / "proj"; R = proj / "results" / "run"; R.mkdir(parents=True)
 for f, c in {"Snakefile": "rule all: pass", "run_deseq2.R": "# r", "de_core.R": "# core"}.items(): (proj / f).write_text(c)
-for f, c in {"analysis_parameters.txt": "padj_threshold=0.05\nlfc_threshold=1.0\n", "data_provenance.txt": "x=1\n", "renv.lock": "{}", "top_genes.tsv": "Gene\tlog2FoldChange\nTP53\t3.5\n"}.items(): (R / f).write_text(c)
+for f, c in {"analysis_parameters.txt": "padj_threshold=0.05\nlfc_threshold=1.0\n", "data_provenance.txt": "x=1\n", "renv.lock": "{}", "top_genes.tsv": "Gene\tlog2FoldChange\nTP53\t3.5\n", "platform.json": "{}"}.items(): (R / f).write_text(c)
 for f in ("heatmap.tiff", "volcano.tiff", "dotplot_go.tiff", "combined_figures.png", "report.pdf"): (R / f).write_bytes(b"fake")
 (proj / "metadata.tsv").write_text("sample\tgroup\nA\tcontrol\n"); (proj / "expression_input.tsv").write_text("gene\tA\nG1\t5\n")
 shutil.copy(ROOT / "omicchain.json", proj / "omicchain.json")

@@ -21,7 +21,7 @@ PAIRED_R = "TRUE" if PLAN["paired"] else "FALSE"
 
 def _r(*args, log):
     """Run Rscript with an argument list (paths with spaces are safe)."""
-    with open(log, "w", encoding="utf-8", errors="replace") as fh:
+    with open(log, "w", encoding="utf-8", errors="replace", newline="\n") as fh:
         status = _sp.run([RSCRIPT, *map(str, args)], stdout=fh, stderr=_sp.STDOUT, cwd=str(BASE)).returncode
     if status != 0:
         tail = _P(log).read_text(encoding="utf-8", errors="replace").splitlines()[-15:]
@@ -73,7 +73,7 @@ rule detect_strand:
         if params.strand == "auto":
             _r(input.script, "detect", input.bam, PLAN["gtf"], PAIRED_R, threads, output[0], log=log[0])
         else:
-            _P(output[0]).write_text(f"strand\t{params.strand}\n", encoding="utf-8")
+            _P(output[0]).write_text(f"strand\t{params.strand}\n", encoding="utf-8", newline="\n")
 
 
 rule count:
@@ -106,7 +106,7 @@ rule merge:
         (OUT / "upstream_run.json").write_text(_json.dumps({
             "date": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "align_threads": PLAN["align_threads"], "count_threads": PLAN["count_threads"],
-            "reference_dir": str(PLAN["ref_root"]), "study_dir": str(PLAN["study"].resolve())}, indent=2))
+            "reference_dir": str(PLAN["ref_root"]), "study_dir": str(PLAN["study"].resolve())}, indent=2), newline="\n")
         c = prov["counting"]
         print(f"\nOmicChain upstream: {len(PLAN['samples'])} sample(s), {len(RUNS)} run(s), "
               f"strandSpecific = {c['strand_specific']} ({c['strand_mode']}), "

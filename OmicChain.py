@@ -699,7 +699,7 @@ with tab3:
                                 flow["id_token"], flow["jwks"], PRIVATE_KEY, flow["salt"],
                                 issuer=flow["issuer"], audience=orcid_client_id,
                             )
-                        ORCID_LINK_PATH.write_text(json.dumps(link, indent=2) + "\n", encoding="utf-8")
+                        ORCID_LINK_PATH.write_text(json.dumps(link, indent=2) + "\n", encoding="utf-8", newline="\n")
                         cached_identity_status.clear()
                         st.rerun()
                     except oidn.IdentityError as link_err:

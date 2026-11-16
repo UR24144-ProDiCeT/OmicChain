@@ -50,7 +50,9 @@ top <- top %>%
   dplyr::mutate(dplyr::across(where(is.numeric), ~ signif(.x, 6)))
 
 tryCatch({
-  write.table(top, file = file.path(outdir, "top_genes.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+  con <- file(file.path(outdir, "top_genes.tsv"), "wb")
+  write.table(top, file = con, sep = "\t", quote = FALSE, row.names = FALSE)
+  close(con)
 }, error = function(e) {
   warning("Failed to write top_genes.tsv: ", e$message)
 })

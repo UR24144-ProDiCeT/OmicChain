@@ -107,7 +107,7 @@ def build_index(genome, dest_base, index_type, log_path):
            str((work / INDEX_BASENAME).resolve()), index_type, str(result.resolve())]
     say(f"  Building the {index_type} index (Rsubread, single core); "
         f"allow about 1 h (gapped) to 3 h (full). Log: {log_path}")
-    with open(log_path, "w", encoding="utf-8", errors="replace") as log:
+    with open(log_path, "w", encoding="utf-8", errors="replace", newline="\n") as log:
         proc = subprocess.Popen(cmd, cwd=work, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                 text=True, encoding="utf-8", errors="replace")
         for line in proc.stdout:
@@ -174,7 +174,7 @@ def load_manifest(path):
 
 def save_manifest(path, manifest):
     tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
     tmp.replace(path)
 
 
