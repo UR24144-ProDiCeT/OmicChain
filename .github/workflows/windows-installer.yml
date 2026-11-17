@@ -67,12 +67,18 @@ jobs:
         shell: pwsh
         run: |
           $inst = "$env:LOCALAPPDATA\Programs\OmicChain"
-          Start-Process cmd -ArgumentList "/c", "`"$inst\OmicChain.cmd`"" -WindowStyle Hidden
+          $out = "$env:RUNNER_TEMP\omicchain-out.log"; $err = "$env:RUNNER_TEMP\omicchain-err.log"; $in = "$env:RUNNER_TEMP\empty.txt"
+          Set-Content $in ""
+          $p = Start-Process cmd.exe -ArgumentList "/c", "`"$inst\OmicChain.cmd`"" -PassThru -RedirectStandardOutput $out -RedirectStandardError $err -RedirectStandardInput $in
           $ok = $false
-          foreach ($i in 1..90) {
-            try { if ((Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8501/_stcore/health).Content -eq "ok") { $ok = $true; Write-Host "healthy after $i s"; break } } catch { }
+          foreach ($i in 1..240) {
+            try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 http://127.0.0.1:8501/_stcore/health).Content -eq "ok") { $ok = $true; Write-Host "healthy after $i s"; break } } catch { }
+            if ($p.HasExited) { Write-Host "The launcher stopped (code $($p.ExitCode))"; break }
             Start-Sleep -Seconds 1
           }
+          Write-Host "--- launcher output"; Get-Content $out -ErrorAction SilentlyContinue
+          Write-Host "--- launcher errors"; Get-Content $err -ErrorAction SilentlyContinue
+          Write-Host "--- project folder"; Get-ChildItem "$env:USERPROFILE\OmicChain" -ErrorAction SilentlyContinue | Select-Object -First 15 | ForEach-Object { $_.Name }
           if (-not $ok) { throw "OmicChain did not answer" }
           if (-not (Test-Path "$env:USERPROFILE\OmicChain\OmicChain.py")) { throw "The project folder was not prepared" }
           if (Test-Path "$env:USERPROFILE\OmicChain\.env") { throw "A .env file was created" }
