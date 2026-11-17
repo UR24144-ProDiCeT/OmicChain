@@ -15,7 +15,8 @@ info <- list(
   container = nzchar(Sys.getenv("OMICCHAIN_CONTAINER")),
   image_version = value(Sys.getenv("OMICCHAIN_IMAGE_VERSION")),
   image_revision = value(Sys.getenv("OMICCHAIN_IMAGE_REVISION")),
-  blas_threads = value(Sys.getenv("OPENBLAS_NUM_THREADS"))
+  blas_threads = value(Sys.getenv("OPENBLAS_NUM_THREADS")),
+  distribution = value(Sys.getenv("OMICCHAIN_DISTRIBUTION"))
 )
 info <- info[!vapply(info, is.null, logical(1))]
 

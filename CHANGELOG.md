@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+**Added**
+- Windows installer (`installer/`): one `OmicChain-<version>-setup.exe` that contains R 4.5.1, the R packages of
+  `renv.lock`, Python 3.12 with the packages of `requirements.windows.lock.txt`, and the application. It installs
+  without administrator rights; nothing else is needed (no `renv::restore()`, no `pip install`). Analyses are kept
+  in `%USERPROFILE%\OmicChain`. The installer is built, installed and tested by the continuous integration
+  (workflow `windows-installer`) and attached to each release.
+- `platform.json` records the distribution used (Windows installer and its version).
+
+**Changed**
+- Snakemake is started with the Python that runs OmicChain (`python -m snakemake`), not from the PATH.
+
 **Fixed**
 - `requirements.windows.lock.txt`: cryptography 41.0.7 (2023, known security issues) replaced by 50.0.1, the
   version of the Linux lock file and of the container image. The Windows lock file is now installed and tested

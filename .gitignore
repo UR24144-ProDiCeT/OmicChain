@@ -29,3 +29,6 @@ venv/
 *.Rproj
 .vscode/
 .idea/
+
+/build/
+/dist/

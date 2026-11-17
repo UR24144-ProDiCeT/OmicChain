@@ -404,6 +404,8 @@ def describe_platform(info) -> str:
         parts.append(f"BLAS {blas}")
     if info.get("container"):
         parts.append(f"OmicChain image {info.get('image_version') or ''}".strip())
+    elif info.get("distribution"):
+        parts.append(info["distribution"])
     return ", ".join(p for p in parts if p)
 
 
