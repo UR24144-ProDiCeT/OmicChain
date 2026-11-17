@@ -15,17 +15,24 @@ New-Item -ItemType Directory -Force $Bundle, $Lib | Out-Null
 function Step($text) { Write-Host "`n=== $text" }
 function Check($what) { if ($LASTEXITCODE -ne 0) { throw "$what failed (code $LASTEXITCODE)" } }
 
+$env:RENV_CONFIG_AUTOLOADER_ENABLED = "false"
+$Empty = Join-Path $Build "empty.Rprofile"; Set-Content -Path $Empty -Value "" -NoNewline
+$env:R_PROFILE_USER = $Empty; $env:R_ENVIRON_USER = $Empty
+
 Step "R"
-$RHome = (& Rscript -e "cat(normalizePath(R.home(), winslash = '\\'))"); Check "Locating R"
-& Rscript -e "if (getRversion() != '4.5.1') stop('R 4.5.1 is required, found ', getRversion())"; Check "R version"
+$Where = Join-Path $Build "rhome.txt"
+Push-Location $Build
+& Rscript --vanilla -e "writeLines(normalizePath(R.home(), winslash = '\\'), commandArgs(TRUE)[1])" $Where; Check "Locating R"
+& Rscript --vanilla -e "if (getRversion() != '4.5.1') stop('R 4.5.1 is required, found ', getRversion())"; Check "R version"
+Pop-Location
+$RHome = (Get-Content $Where -TotalCount 1).Trim()
+if (-not $RHome -or -not (Test-Path (Join-Path $RHome "bin\Rscript.exe"))) { throw "R was not found (R.home: '$RHome')" }
+Write-Host "R found in $RHome"
 Copy-Item -Recurse $RHome (Join-Path $Bundle "R")
 $Rscript = Join-Path $Bundle "R\bin\Rscript.exe"
 
 Step "R packages (renv.lock)"
-$env:RENV_CONFIG_AUTOLOADER_ENABLED = "false"
 $env:R_LIBS = $Lib; $env:R_LIBS_USER = $Lib; $env:R_LIBS_SITE = $Lib
-$Empty = Join-Path $Build "empty.Rprofile"; Set-Content -Path $Empty -Value "" -NoNewline
-$env:R_PROFILE_USER = $Empty; $env:R_ENVIRON_USER = $Empty
 Push-Location $Build
 & $Rscript (Join-Path $PSScriptRoot "install_r_packages.R") (Join-Path $Root "renv.lock") $Lib; Check "Installing the R packages"
 Pop-Location
