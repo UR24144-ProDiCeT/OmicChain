@@ -42,3 +42,21 @@ jobs:
         run: python tests/run_all.py portable
         env:
           PYTHONUTF8: "1"
+
+  windows-lock:
+    # The exact set of requirements.windows.lock.txt, on the Python version it was made for.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Python packages (Windows lock file)
+        run: pip install -r requirements.windows.lock.txt -r requirements-dev.txt
+      - name: Versions
+        run: python -c "import cryptography, streamlit, snakemake, web3; print('cryptography', cryptography.__version__, '| streamlit', streamlit.__version__, '| web3', web3.__version__)"
+      - name: Tests
+        run: python tests/run_all.py portable
+        env:
+          PYTHONUTF8: "1"

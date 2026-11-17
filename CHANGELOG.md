@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+**Fixed**
+- `requirements.windows.lock.txt`: cryptography 41.0.7 (2023, known security issues) replaced by 50.0.1, the
+  version of the Linux lock file and of the container image. The Windows lock file is now installed and tested
+  as such by the continuous integration (Python 3.12, job `windows-lock`).
+
 ## 1.0.0-rc3 — 2026-11
 
 **Fixed**
