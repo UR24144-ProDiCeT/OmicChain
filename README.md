@@ -47,7 +47,13 @@ The blockchain proves that this fingerprint existed at a date and was published 
 
 ## Install
 
-Python 3.10 or later (tested with 3.13) and R 4.5.x (the R packages are pinned to Bioconductor 3.22).
+**Windows, the simplest way:** download `OmicChain-<version>-setup.exe` from the
+[releases](https://github.com/UR24144-ProDiCeT/OmicChain/releases) and run it. It contains R, the R packages,
+Python and the application; no administrator rights and nothing else to install. See [INSTALL.md](INSTALL.md).
+
+**Container image:** see [DOCKER.md](DOCKER.md).
+
+**From the source code** (Linux, macOS, Windows): Python 3.10 or later (tested with 3.13) and R 4.5.x (the R packages are pinned to Bioconductor 3.22).
 
 ```
 pip install -r requirements.txt

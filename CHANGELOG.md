@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0-rc4 — 2026-11
 
 **Added**
 - Windows installer (`installer/`): one `OmicChain-<version>-setup.exe` that contains R 4.5.1, the R packages of
