@@ -14,6 +14,9 @@
 - Snakemake is started with the Python that runs OmicChain (`python -m snakemake`), not from the PATH.
 
 **Fixed**
+- Background tasks (download, alignment, counting): a task could be shown "interrupted" for a moment while it
+  was still running, when its heartbeat file was read during its rewriting. The heartbeat is now written
+  atomically, and its modification time is used if it cannot be read.
 - `requirements.windows.lock.txt`: cryptography 41.0.7 (2023, known security issues) replaced by 50.0.1, the
   version of the Linux lock file and of the container image. The Windows lock file is now installed and tested
   as such by the continuous integration (Python 3.12, job `windows-lock`).

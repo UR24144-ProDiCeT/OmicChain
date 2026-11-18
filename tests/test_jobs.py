@@ -82,5 +82,19 @@ check("7. the launcher has ended, the task still runs", oj2.status(ROOT, jid)["s
 s = wait(jid)
 check("7. ... and ends normally", s["status"] == "done" and "finished" in oj2.log_tail(ROOT, jid), s)
 
+j = oj.start(ROOT, [PY, "-c", "import time; time.sleep(8)"], label="Heartbeat", key="k8", cwd=ROOT.parent)
+time.sleep(1)
+info = oj.status(ROOT, j)
+jd = Path(info["dir"])
+created = info["created_ts"]
+hb = jd / "heartbeat"
+hb.write_text("", newline="\n")
+import json as _json
+meta = _json.loads((jd / "job.json").read_text(encoding="utf-8")); meta["created_ts"] = created - 3600
+(jd / "job.json").write_text(_json.dumps(meta), encoding="utf-8", newline="\n")
+check("8. heartbeat read while it is rewritten (empty): the long task is still running", oj.status(ROOT, j)["status"] == "running",
+      oj.status(ROOT, j))
+wait(j)
+
 print("\n" + (f"{len(FAILED)} CHECK(S) FAILED: {FAILED}" if FAILED else "ALL CHECKS PASS"))
 sys.exit(1 if FAILED else 0)
