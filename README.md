@@ -65,8 +65,8 @@ streamlit run OmicChain.py
 Details, including the exact R environment (`renv`), are in [INSTALL.md](INSTALL.md). Read
 [SECURITY.md](SECURITY.md) before using a real account: the application holds a publishing key.
 
-To try it without sequencing data, choose "A count matrix" in the first step and load
-`examples/simulated_counts.tsv`.
+To try it without sequencing data, follow *Your first analysis in ten minutes* in
+[USER_GUIDE.md](USER_GUIDE.md) (`examples/simulated_counts.tsv` and `examples/simulated_samples.tsv`).
 
 ## Verify a certified analysis
 
@@ -83,6 +83,7 @@ or use the Verify step of the application, or the public page
 
 | | |
 |---|---|
+| [USER_GUIDE.md](USER_GUIDE.md) | user guide: from the installation to the verification of an analysis |
 | [INSTALL.md](INSTALL.md) | installation |
 | [DOCKER.md](DOCKER.md) | running OmicChain, or verifying an analysis, in the reference container image |
 | [VERIFY.md](VERIFY.md) | verifying and re-running a certified analysis |

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+**Added**
+- `USER_GUIDE.md`: the user guide, from the installation to the verification of an analysis.
+- `examples/simulated_samples.tsv`: the sample sheet of the simulated example (first analysis in two clicks).
+
 ## 1.0.0-rc4 — 2026-11
 
 **Added**
