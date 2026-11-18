@@ -1,0 +1,97 @@
+name: windows-installer
+
+# Builds the Windows installer (R, R packages, Python, application), installs it as a user would,
+# runs the tests with the installed R and Python, and attaches the installer to the release of a tag.
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - "installer/**"
+      - ".github/workflows/windows-installer.yml"
+      - "renv.lock"
+      - "DESCRIPTION"
+      - "requirements.windows.lock.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "4.5.1"
+          use-public-rspm: false
+
+      - name: Cache of the R packages
+        uses: actions/cache@v4
+        with:
+          path: build/library
+          key: rlib-windows-${{ hashFiles('renv.lock', 'installer/install_r_packages.R') }}
+
+      - name: Build the installer
+        shell: pwsh
+        run: ./installer/build.ps1 -Version "${{ github.ref_type == 'tag' && github.ref_name || 'dev' }}"
+
+      - name: Install it as a user would (no administrator rights)
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem dist\*.exe | Select-Object -First 1
+          Start-Process $setup.FullName -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER" -Wait
+          $inst = "$env:LOCALAPPDATA\Programs\OmicChain"
+          foreach ($f in "OmicChain.cmd", "python\python.exe", "R\bin\Rscript.exe", "library\DESeq2", "app\OmicChain.py") {
+            if (-not (Test-Path "$inst\$f")) { throw "Not installed: $f" }
+          }
+          Write-Host "Installed in $inst"
+
+      - name: Tests with the installed R and Python (environment record, whole pipeline with DESeq2, verification)
+        shell: cmd
+        run: |
+          call "%LOCALAPPDATA%\Programs\OmicChain\omicchain-env.cmd"
+          set OMICCHAIN_REQUIRE_REAL=1
+          where python
+          where Rscript
+          python tests\run_all.py real
+
+      - name: The application starts from its shortcut target and answers
+        shell: pwsh
+        run: |
+          $inst = "$env:LOCALAPPDATA\Programs\OmicChain"
+          $out = "$env:RUNNER_TEMP\omicchain-out.log"; $err = "$env:RUNNER_TEMP\omicchain-err.log"; $in = "$env:RUNNER_TEMP\empty.txt"
+          Set-Content $in ""
+          $p = Start-Process cmd.exe -ArgumentList "/c", "`"$inst\OmicChain.cmd`"" -PassThru -RedirectStandardOutput $out -RedirectStandardError $err -RedirectStandardInput $in
+          $ok = $false
+          foreach ($i in 1..240) {
+            try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 5 http://127.0.0.1:8501/_stcore/health).Content -eq "ok") { $ok = $true; Write-Host "healthy after $i s"; break } } catch { }
+            if ($p.HasExited) { Write-Host "The launcher stopped (code $($p.ExitCode))"; break }
+            Start-Sleep -Seconds 1
+          }
+          Write-Host "--- launcher output"; Get-Content $out -ErrorAction SilentlyContinue
+          Write-Host "--- launcher errors"; Get-Content $err -ErrorAction SilentlyContinue
+          Write-Host "--- project folder"; Get-ChildItem "$env:USERPROFILE\OmicChain" -ErrorAction SilentlyContinue | Select-Object -First 15 | ForEach-Object { $_.Name }
+          if (-not $ok) { throw "OmicChain did not answer" }
+          if (-not (Test-Path "$env:USERPROFILE\OmicChain\OmicChain.py")) { throw "The project folder was not prepared" }
+          if (Test-Path "$env:USERPROFILE\OmicChain\.env") { throw "A .env file was created" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omicchain-windows-installer
+          path: dist/*.exe
+          retention-days: 14
+
+      - name: Attach the installer to the release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" (Get-ChildItem dist\*.exe).FullName --clobber

@@ -8,6 +8,7 @@ import tempfile
 import json
 import hashlib
 import subprocess
+import sys
 import time
 from pathlib import Path
 from datetime import datetime, timezone
@@ -419,8 +420,8 @@ with tab1:
             if st.button("Run exploration", type="primary"):
                 with st.spinner("Running exploration..."):
                     try:
-                        subprocess.run(["snakemake", "--unlock"], check=False)
-                        subprocess.run(["snakemake", "exploration", "-j4"]
+                        subprocess.run([sys.executable, "-m", "snakemake", "--unlock"], check=False)
+                        subprocess.run([sys.executable, "-m", "snakemake", "exploration", "-j4"]
                                        + (["--config", f"covariate={covariate}"] if covariate else []),
                                        check=True)
                         oex.save_signature(EXPLORATION_DIR, oex.data_signature(BASE_DIR, covariate), covariate)
@@ -481,9 +482,9 @@ with tab1:
         with st.spinner("Running pipeline..."):
             pipeline_ok = False
             try:
-                subprocess.run(["snakemake", "--unlock"], check=False)
+                subprocess.run([sys.executable, "-m", "snakemake", "--unlock"], check=False)
                 subprocess.run(
-                    ["snakemake", "-j4", "--config",
+                    [sys.executable, "-m", "snakemake", "-j4", "--config",
                      *snakemake_config_args(padj_threshold, lfc_threshold,
                                             st.session_state.get("covariate", ""))],
                     check=True,

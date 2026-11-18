@@ -4,6 +4,17 @@ OmicChain runs a Snakemake/R differential-expression pipeline, fingerprints
 everything that goes into the result (code, parameters, input data, R
 environment, output) and publishes the fingerprint on-chain.
 
+## Windows: the installer
+
+On Windows, the simplest way is the installer `OmicChain-<version>-setup.exe`, attached to each release
+(https://github.com/UR24144-ProDiCeT/OmicChain/releases). It contains R, the R packages, Python and the
+application; it needs no administrator rights and nothing else to install. Windows may show a warning
+("Windows protected your PC") because the installer is not signed: click *More info*, then *Run anyway*.
+OmicChain is then started from the Start menu; analyses are kept in `%USERPROFILE%\OmicChain`.
+The `.env` file (blockchain publication) is placed in that folder.
+
+The sections below describe the installation from the source code (Linux, macOS, Windows).
+
 ## Requirements
 
 - **Python 3.10+**
