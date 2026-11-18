@@ -80,15 +80,25 @@ def status(root, job_id):
     if result:
         info.update(result)
     else:
-        try:
-            beat = float((d / "heartbeat").read_text())
-        except (OSError, ValueError):
-            beat = info.get("created_ts", 0)
+        beat = _last_beat(d, info.get("created_ts", 0))
         info["status"] = "running" if time.time() - beat < HEARTBEAT_STALE else "interrupted"
     end = info.get("ended_ts") or time.time()
     info["elapsed_s"] = max(0.0, end - info.get("created_ts", end))
     info["dir"] = str(d)
     return info
+
+
+def _last_beat(d, default):
+    """Time of the last heartbeat. A file being rewritten can be read empty: its modification time is used then."""
+    hb = d / "heartbeat"
+    try:
+        return float(hb.read_text())
+    except (OSError, ValueError):
+        pass
+    try:
+        return hb.stat().st_mtime
+    except OSError:
+        return default
 
 
 def list_jobs(root):
@@ -167,7 +177,9 @@ def _run(job_dir):
     def beat():
         while not stop.is_set():
             try:
-                (d / "heartbeat").write_text(str(time.time()), newline="\n")
+                tmp = d / "heartbeat.tmp"
+                tmp.write_text(str(time.time()), newline="\n")
+                os.replace(tmp, d / "heartbeat")
             except OSError:
                 pass
             stop.wait(HEARTBEAT_EVERY)
@@ -185,7 +197,7 @@ def _run(job_dir):
         except OSError as e:
             error = str(e)
             log.write(f"\nERROR: the command could not be started: {e}\n".encode())
-        log.write(f"\n[{_now()}] fin, code {code}\n".encode())
+        log.write(f"\n[{_now()}] end, code {code}\n".encode())
     stop.set()
     if not (d / "result.json").exists():
         _write_json(d / "result.json", {"status": "done" if code == 0 else "failed", "exit_code": code,
