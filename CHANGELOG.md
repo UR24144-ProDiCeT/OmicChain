@@ -11,6 +11,8 @@
   (`ACCOUNT_ADDRESS`, `PRIVATE_KEY`). It now starts: without network settings, analyses are run and
   certified; with network settings only, fingerprints are checked on-chain. The missing settings are
   named where they are needed.
+- Background tasks on Windows: writing the state of a task could fail ("Access is denied") when another
+  process was reading it at that moment. The write and the read are now retried for a short time.
 
 ## 1.0.0-rc4 — 2026-11
 
