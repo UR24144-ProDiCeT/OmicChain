@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**Added**
+- `USER_GUIDE.md`: the user guide, from the installation to the verification of an analysis.
+- `examples/simulated_samples.tsv`: the sample sheet of the simulated example (first analysis in two clicks).
+
+**Fixed**
+- The application stopped at start-up when `.env` was missing, or held no publishing account
+  (`ACCOUNT_ADDRESS`, `PRIVATE_KEY`). It now starts: without network settings, analyses are run and
+  certified; with network settings only, fingerprints are checked on-chain. The missing settings are
+  named where they are needed.
+- Background tasks on Windows: writing the state of a task could fail ("Access is denied") when another
+  process was reading it at that moment. The write and the read are now retried for a short time.
+
 ## 1.0.0-rc4 — 2026-11
 
 **Added**

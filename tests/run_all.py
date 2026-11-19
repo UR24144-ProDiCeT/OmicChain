@@ -12,7 +12,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 PORTABLE = ["test_inputs", "test_chain_publish", "test_fetch", "test_jobs", "test_line_endings"]
 FAST = PORTABLE + ["test_covariate", "test_verify", "test_data_origin", "test_identity_integration", "test_qc_history",
-                   "test_app_publish", "test_app_design", "test_app_explore", "test_app_matrix", "test_app_orcid",
+                   "test_app_publish", "test_app_settings", "test_app_design", "test_app_explore", "test_app_matrix", "test_app_orcid",
                    "test_app_rerun", "test_app_rerun_raw"]
 UPSTREAM = ["test_reference", "test_upstream", "test_app_reference", "test_app_geo", "test_app_annotate",
             "test_app_local", "test_replay", "test_environment"]
