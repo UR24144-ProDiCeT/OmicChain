@@ -12,10 +12,17 @@ date-released: 2026-11-23
 license: LGPL-3.0-only
 repository-code: "https://github.com/UR24144-ProDiCeT/OmicChain"
 url: "https://ur24144-prodicet.github.io/OmicChain/"
+doi: "10.5281/zenodo.24463189"
 identifiers:
+  - type: doi
+    value: "10.5281/zenodo.24463189"
+    description: "Zenodo archive of version 1.0.0"
+  - type: doi
+    value: "10.5281/zenodo.24463188"
+    description: "Zenodo archive, all versions"
   - type: swh
-    value: "swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e"
-    description: "Software Heritage archive of version 1.0.0-rc1 (commit 9d566ee0)"
+    value: "swh:1:dir:fad212213d5c1bc2dfc87ee0456074c693b56a01"
+    description: "Software Heritage archive of version 1.0.0 (commit 040edeb8)"
 keywords:
   - RNA-seq
   - differential expression
