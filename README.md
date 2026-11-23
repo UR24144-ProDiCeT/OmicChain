@@ -118,6 +118,8 @@ and in [Software Heritage](https://archive.softwareheritage.org/swh:1:dir:fad212
 swh:1:dir:fad212213d5c1bc2dfc87ee0456074c693b56a01;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:32c324ce02ee5401a3ab7e853196e66176ed87d0;anchor=swh:1:rev:040edeb8325add5292a4ec3695d1b8f1bdffdba2
 ```
 
+Research Resource Identifier: [RRID:SCR_029337](https://rrid.site/data/record/nlx_144509-1/SCR_029337/resolver). bio.tools: [biotools:omicchain](https://bio.tools/omicchain).
+
 The container image of version 1.0.0 is
 `ghcr.io/ur24144-prodicet/omicchain@sha256:50e5de7d762dea4c79ad909ef5f624f3068a9cbabd6bd8c2d906c9981a78748e`.
 

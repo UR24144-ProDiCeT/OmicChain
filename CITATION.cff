@@ -20,6 +20,12 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.24463188"
     description: "Zenodo archive, all versions"
+  - type: other
+    value: "RRID:SCR_029337"
+    description: "Research Resource Identifier (SciCrunch Registry)"
+  - type: url
+    value: "https://bio.tools/omicchain"
+    description: "bio.tools entry (biotools:omicchain)"
   - type: swh
     value: "swh:1:dir:fad212213d5c1bc2dfc87ee0456074c693b56a01"
     description: "Software Heritage archive of version 1.0.0 (commit 040edeb8)"
