@@ -96,5 +96,20 @@ check("8. heartbeat read while it is rewritten (empty): the long task is still r
       oj.status(ROOT, j))
 wait(j)
 
+_real_replace, _refusals = os.replace, {"n": 0}
+def _busy_replace(src, dst):
+    if _refusals["n"] < 3:
+        _refusals["n"] += 1
+        raise PermissionError(5, "Access is denied (file read by another process)")
+    return _real_replace(src, dst)
+os.replace = _busy_replace
+try:
+    target = ROOT.parent / "busy.json"
+    oj._write_json(target, {"ok": 1})
+finally:
+    os.replace = _real_replace
+check("9. file being read by another process (Windows): the write waits and succeeds",
+      _refusals["n"] == 3 and oj._read_json(target) == {"ok": 1} and not list(ROOT.parent.glob("busy.json*.tmp")))
+
 print("\n" + (f"{len(FAILED)} CHECK(S) FAILED: {FAILED}" if FAILED else "ALL CHECKS PASS"))
 sys.exit(1 if FAILED else 0)

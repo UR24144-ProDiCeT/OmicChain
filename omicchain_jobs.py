@@ -22,17 +22,33 @@ def _now():
     return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _replace(tmp, path, attempts=40):
+    """os.replace, retried: on Windows, a file being read by another process cannot be replaced."""
+    for i in range(attempts):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if i == attempts - 1:
+                raise
+            time.sleep(0.05)
+
+
 def _write_json(path, data):
-    tmp = Path(str(path) + ".tmp")
+    tmp = Path(f"{path}.{os.getpid()}.tmp")
     tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
-    os.replace(tmp, path)
+    _replace(tmp, path)
 
 
 def _read_json(path):
-    try:
-        return json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
+    for i in range(20):
+        try:
+            return json.loads(Path(path).read_text(encoding="utf-8"))
+        except PermissionError:
+            time.sleep(0.05)
+        except (OSError, ValueError):
+            return None
+    return None
 
 
 def start(root, command, *, label, key=None, cwd=None, env=None):
@@ -179,7 +195,7 @@ def _run(job_dir):
             try:
                 tmp = d / "heartbeat.tmp"
                 tmp.write_text(str(time.time()), newline="\n")
-                os.replace(tmp, d / "heartbeat")
+                _replace(tmp, d / "heartbeat", attempts=5)
             except OSError:
                 pass
             stop.wait(HEARTBEAT_EVERY)

@@ -233,9 +233,12 @@ def display_hash_with_identicon(hash_value: str, label: str, code_chars: int = N
 
 def build_contract(w3, address, abi_path):
     abi = load_abi(abi_path)
-    if not abi:
+    if not (abi and w3 and address):
         return None
-    return w3.eth.contract(address=checksum(address), abi=abi)
+    try:
+        return w3.eth.contract(address=checksum(address), abi=abi)
+    except ValueError:
+        return None
 
 
 def publish_proof_onchain(bundle_hash, w3, contract_proof, on_sent=None):
@@ -284,9 +287,25 @@ else:
 
 w3 = get_web3(RPC)
 
-for _label, _value in (("RPC", RPC.split("//")[-1].split("/")[0]), ("Account", ACCOUNT_ADDRESS[:42]), ("Proof contract", PROOF[:42])):
+_NET = "MAINNET" if network == "Base Mainnet" else "TESTNET"
+READ_MISSING = [v for v, x in ((f"INFURA_URL_{_NET}", RPC), (f"CONTRACT_PROOF_ADDRESS_{_NET}", PROOF)) if not x]
+PUBLISH_MISSING = READ_MISSING + [v for v, x in (("ACCOUNT_ADDRESS", ACCOUNT_ADDRESS), ("PRIVATE_KEY", PRIVATE_KEY)) if not x]
+
+
+def missing_settings(names, purpose):
+    st.info(f"To {purpose}, set {', '.join(f'`{n}`' for n in names)} in the `.env` file of the project folder "
+            f"(`{BASE_DIR}`), then restart OmicChain. See USER_GUIDE.md, section 2.")
+
+
+for _label, _value in (("RPC", (RPC or "").split("//")[-1].split("/")[0]), ("Account", (ACCOUNT_ADDRESS or "")[:42]),
+                       ("Proof contract", (PROOF or "")[:42])):
     st.sidebar.caption(_label)
-    st.sidebar.code(_value, language=None, wrap_lines=True)
+    st.sidebar.code(_value or "not set", language=None, wrap_lines=True)
+if READ_MISSING:
+    st.sidebar.caption("No network settings for this network: analyses can be run and certified, not published "
+                       "or checked on-chain.")
+elif PUBLISH_MISSING:
+    st.sidebar.caption("No publishing account: fingerprints can be checked on-chain, not published.")
 
 _orcid = None
 if ORCID_LINK_PATH.is_file():
@@ -580,7 +599,9 @@ with tab2:
         republish = True
 
     can_pay, confirmed = True, True
-    if bundle and republish:
+    if bundle and PUBLISH_MISSING:
+        missing_settings(PUBLISH_MISSING, "publish on " + network)
+    if bundle and republish and not PUBLISH_MISSING:
         try:
             est = och.publication_estimate(w3, build_contract(w3, PROOF, ABI_PROOF_PATH), ACCOUNT_ADDRESS, bundle)
         except Exception as e:
@@ -600,7 +621,8 @@ with tab2:
             st.caption("Base Testnet is a free test network: a proof published there has no public value. "
                        "Select Base Mainnet in the sidebar for a real certificate.")
 
-    if st.button("Publish Proof", type="primary", disabled=not republish or not confirmed or not can_pay):
+    if st.button("Publish Proof", type="primary",
+                 disabled=not republish or not confirmed or not can_pay or bool(PUBLISH_MISSING)):
         if not bundle:
             st.error("❌ No hash available.")
         else:
@@ -879,7 +901,9 @@ with tab4:
             help="As shown on the certificate, with or without the leading 0x.",
         ).strip()
 
-    if st.button("Verify on-chain", type="primary"):
+    if READ_MISSING:
+        missing_settings(READ_MISSING, "check a fingerprint on " + network)
+    if st.button("Verify on-chain", type="primary", disabled=bool(READ_MISSING)):
         if not verify_hash_input or not verify_tx_input:
             st.error("❌ Please provide both the fingerprint and the transaction ID.")
         else:
@@ -976,7 +1000,7 @@ with tab4:
                 ),
             )
 
-        if st.button("Search on-chain by hash"):
+        if st.button("Search on-chain by hash", disabled=bool(READ_MISSING)):
             if not search_hash_input:
                 st.error("❌ Please provide a fingerprint to search for.")
             else:
@@ -1039,11 +1063,12 @@ with tab4:
                                         f"[🔗 tx]({explorer}/tx/{tx_hex})"
                                     )
 
-    st.caption(
-        "Alternatively, every publication is also listed on the contract's "
-        f"page on the block explorer — look for the **HashPublished** "
-        f"events: [{PROOF[:10]}…]({explorer}/address/{PROOF})"
-    )
+    if PROOF:
+        st.caption(
+            "Alternatively, every publication is also listed on the contract's "
+            f"page on the block explorer — look for the **HashPublished** "
+            f"events: [{PROOF[:10]}…]({explorer}/address/{PROOF})"
+        )
 
     st.markdown("---")
     ouv.render_rerun(BASE_DIR, default_expected=st.session_state.get("verify_hash_input", ""))
