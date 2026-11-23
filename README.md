@@ -2,6 +2,8 @@
 
 ![OmicChain banner](omicchain_banner.jpg)
 
+[![DOI](https://zenodo.org/badge/1140489576.svg)](https://doi.org/10.5281/zenodo.24463188)
+
 **Certified, verifiable RNA-seq differential expression analyses.**
 
 [![tests](https://github.com/UR24144-ProDiCeT/OmicChain/actions/workflows/tests.yml/badge.svg)](https://github.com/UR24144-ProDiCeT/OmicChain/actions/workflows/tests.yml)
@@ -108,11 +110,15 @@ See [CITATION.cff](CITATION.cff). OmicChain is distributed under the GNU Lesser 
 License v3 ([LICENSE.txt](LICENSE.txt)); the smart contract `Proof.sol` is under the MIT licence.
 Third-party components: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
-The source code is archived in [Software Heritage](https://www.softwareheritage.org/).
-Version 1.0.0-rc1: [`swh:1:dir:b29bc622…`](https://archive.softwareheritage.org/swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:f0f462c5eb8f2ad7f786c185178f7504758516d3;anchor=swh:1:rev:9d566ee089991538d96f3c99154d5dbabd1291d6)
+Version 1.0.0 is archived in [Zenodo](https://doi.org/10.5281/zenodo.24463189) (DOI
+10.5281/zenodo.24463189; all versions: [10.5281/zenodo.24463188](https://doi.org/10.5281/zenodo.24463188))
+and in [Software Heritage](https://archive.softwareheritage.org/swh:1:dir:fad212213d5c1bc2dfc87ee0456074c693b56a01;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:32c324ce02ee5401a3ab7e853196e66176ed87d0;anchor=swh:1:rev:040edeb8325add5292a4ec3695d1b8f1bdffdba2):
 
 ```
-swh:1:dir:b29bc6224355207b40a1de3864ec3882093d434e;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:f0f462c5eb8f2ad7f786c185178f7504758516d3;anchor=swh:1:rev:9d566ee089991538d96f3c99154d5dbabd1291d6
+swh:1:dir:fad212213d5c1bc2dfc87ee0456074c693b56a01;origin=https://github.com/UR24144-ProDiCeT/OmicChain;visit=swh:1:snp:32c324ce02ee5401a3ab7e853196e66176ed87d0;anchor=swh:1:rev:040edeb8325add5292a4ec3695d1b8f1bdffdba2
 ```
+
+The container image of version 1.0.0 is
+`ghcr.io/ur24144-prodicet/omicchain@sha256:50e5de7d762dea4c79ad909ef5f624f3068a9cbabd6bd8c2d906c9981a78748e`.
 
 © 2026 Pierre-Olivier Guichet — UR24144 ProDiCeT, Université de Poitiers / CHU de Poitiers.
