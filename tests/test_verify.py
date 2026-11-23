@@ -164,7 +164,7 @@ cli = subprocess.run([sys.executable, str(PROJ / "omicchain_verify.py"), str(REV
                       "--metadata", str(META), "--expected", BUNDLE, "--project", str(PROJ)], capture_output=True, text=True)
 check("14. command line: VERDICT REPRODUCED, code 0", cli.returncode == 0 and "VERDICT : REPRODUCED" in cli.stdout, cli.stdout[-600:] + cli.stderr[-600:])
 check("16. crate code recognised (official) -> step 'code of the crate' OK, nothing asked",
-      any(st["name"] == "code of the crate" and st["ok"] and "official OmicChain 1.0.0-rc2" in st["detail"] for st in verify()["steps"]))
+      any(st["name"] == "code of the crate" and st["ok"] and "official OmicChain 1.0.0" in st["detail"] for st in verify()["steps"]))
 cc = ov.crate_code_check(REV / "crate.zip", PROJ)
 check("16. crate_code_check (zip): known, 3 files", cc and cc["known"] and len(cc["files"]) == 3, cc)
 snake_ok = (PROJ / "Snakefile").read_text()
@@ -194,6 +194,6 @@ cc = ov.crate_code_check(alien, PROJ)
 check("19. version recorded in official_code.json -> recognised ('official OmicChain 0.8')", cli.returncode == 0 and cc["known"]
       and any(f["origin"] == "official OmicChain 0.8" for f in cc["files"]), (cli.stdout + cli.stderr, cc))
 reg = json.loads((PROJ / "official_code.json").read_text())
-check("19. ... the registry keeps the other versions", [r["version"] for r in reg["releases"]] == ["0.9", "1.0.0-rc1", "1.0.0-rc2", "0.8"], reg)
+check("19. ... the registry keeps the other versions", [r["version"] for r in reg["releases"]] == ["0.9", "1.0.0-rc1", "1.0.0-rc2", "1.0.0", "0.8"], reg)
 print("\n" + (f"{len(FAILED)} CHECK(S) FAILED: {FAILED}" if FAILED else "ALL CHECKS PASS"))
 sys.exit(1 if FAILED else 0)

@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 — 2026-11-23
+
+First stable release. The certified code (Snakefile, run_deseq2.R, de_core.R) is unchanged since 1.0.0-rc2:
+analyses certified with 1.0.0-rc2 to 1.0.0-rc4 are recognised as official 1.0.0 code.
 
 **Added**
 - `USER_GUIDE.md`: the user guide, from the installation to the verification of an analysis.
